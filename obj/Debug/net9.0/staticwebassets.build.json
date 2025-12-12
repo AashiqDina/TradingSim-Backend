@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "IyMPfBvJroIk013In/X0+NAV3sbK3/RZWZo8zx1VKG8=",
+  "Source": "TradingSimulatorBackend",
+  "BasePath": "_content/TradingSimulatorBackend",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
