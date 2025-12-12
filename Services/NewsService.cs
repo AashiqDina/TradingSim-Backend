@@ -13,7 +13,7 @@ namespace TradingSimulator_Backend.Services
     public class NewsService : INewsService{
         private readonly HttpClient _httpClient;
         private readonly AppDbContext _context;
-        private readonly string _apiKey = "";
+        private readonly string _apiKey = Environment.GetEnvironmentVariable("NEWS_API_KEY");
 
         private static ConcurrentDictionary<string, (List<CompanyNews?> CompNews, DateTime Timestamp)> _CompanyNewsCache = new ConcurrentDictionary<string, (List<CompanyNews?> CompNews, DateTime Timestamp)>();
         private static (List<CompanyNews?> MarketNews, DateTime Timestamp)? _MarketNewsCache = null;
@@ -164,4 +164,5 @@ namespace TradingSimulator_Backend.Services
 
     }
 }
+
 
