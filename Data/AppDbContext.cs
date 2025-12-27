@@ -27,9 +27,7 @@ namespace TradingSimulator_Backend.Data
             {
                 entity.SetTableName(entity.GetTableName().ToLower());
                 foreach (var property in entity.GetProperties())
-                {
                     property.SetColumnName(property.Name.ToLower());
-                }
             }
 
             modelBuilder.Entity<Portfolio>()
@@ -55,27 +53,32 @@ namespace TradingSimulator_Backend.Data
 
             modelBuilder.Entity<Friends>(f =>
             {
+                f.HasKey(x => x.UserId);
                 f.HasOne(f => f.User)
                  .WithOne()
                  .HasForeignKey<Friends>(f => f.UserId)
                  .OnDelete(DeleteBehavior.Cascade);
 
-                f.OwnsMany(f => f.SentRequests).ToTable("friends_sentrequests");
-                f.OwnsMany(f => f.ReceivedRequests).ToTable("friends_receivedrequests");
-                f.OwnsMany(f => f.FriendsList).ToTable("friends_friendslist");
-
                 f.OwnsMany(f => f.SentRequests, sr =>
                 {
+                    sr.ToTable("friends_sentrequests");
+                    sr.WithOwner().HasForeignKey("friends_userid");
                     foreach (var prop in sr.OwnedEntityType.GetProperties())
                         prop.SetColumnName(prop.Name.ToLower());
                 });
+
                 f.OwnsMany(f => f.ReceivedRequests, rr =>
                 {
+                    rr.ToTable("friends_receivedrequests");
+                    rr.WithOwner().HasForeignKey("friends_userid");
                     foreach (var prop in rr.OwnedEntityType.GetProperties())
                         prop.SetColumnName(prop.Name.ToLower());
                 });
+
                 f.OwnsMany(f => f.FriendsList, fl =>
                 {
+                    fl.ToTable("friends_friendslist");
+                    fl.WithOwner().HasForeignKey("friends_userid");
                     foreach (var prop in fl.OwnedEntityType.GetProperties())
                         prop.SetColumnName(prop.Name.ToLower());
                 });
