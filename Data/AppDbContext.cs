@@ -23,13 +23,6 @@ namespace TradingSimulator_Backend.Data
             modelBuilder.Entity<StockHistory>().ToTable("stockhistory");
             modelBuilder.Entity<Friends>().ToTable("friends");
 
-            foreach (var entity in modelBuilder.Model.GetEntityTypes())
-            {
-                entity.SetTableName(entity.GetTableName().ToLower());
-                foreach (var property in entity.GetProperties())
-                    property.SetColumnName(property.Name.ToLower());
-            }
-
             modelBuilder.Entity<Portfolio>()
                 .HasOne(p => p.User)
                 .WithOne()
@@ -86,3 +79,4 @@ namespace TradingSimulator_Backend.Data
         }
     }
 }
+
