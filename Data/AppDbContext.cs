@@ -44,39 +44,35 @@ namespace TradingSimulator_Backend.Data
                 .HasForeignKey(s => s.PortfolioId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Friends>(f =>
-            {
-                f.HasKey(x => x.UserId);
-                f.HasOne(f => f.User)
-                 .WithOne()
-                 .HasForeignKey<Friends>(f => f.UserId)
-                 .OnDelete(DeleteBehavior.Cascade);
-
-                f.OwnsMany(f => f.SentRequests, sr =>
+                modelBuilder.Entity<Friends>(f =>
                 {
-                    sr.ToTable("friends_sentrequests");
-                    sr.WithOwner().HasForeignKey("friends_userid");
-                    foreach (var prop in sr.OwnedEntityType.GetProperties())
-                        prop.SetColumnName(prop.Name.ToLower());
+                    f.HasKey(x => x.UserId);
+                
+                    f.HasOne(f => f.User)
+                     .WithOne()
+                     .HasForeignKey<Friends>(f => f.UserId)
+                     .OnDelete(DeleteBehavior.Cascade);
+                
+                    f.HasMany(f => f.FriendsList)
+                     .WithMany()
+                     .UsingEntity(j => j.ToTable("friends_list")
+                                         .HasKey("FriendsId", "UserId"));
+                
+                    f.HasMany(f => f.SentRequests)
+                     .WithMany()
+                     .UsingEntity(j => j.ToTable("friends_sentrequests")
+                                         .HasKey("FriendsId", "UserId"));
+                
+                    f.HasMany(f => f.ReceivedRequests)
+                     .WithMany()
+                     .UsingEntity(j => j.ToTable("friends_receivedrequests")
+                                         .HasKey("FriendsId", "UserId"));
                 });
 
-                f.OwnsMany(f => f.ReceivedRequests, rr =>
-                {
-                    rr.ToTable("friends_receivedrequests");
-                    rr.WithOwner().HasForeignKey("friends_userid");
-                    foreach (var prop in rr.OwnedEntityType.GetProperties())
-                        prop.SetColumnName(prop.Name.ToLower());
-                });
 
-                f.OwnsMany(f => f.FriendsList, fl =>
-                {
-                    fl.ToTable("friends_friendslist");
-                    fl.WithOwner().HasForeignKey("friends_userid");
-                    foreach (var prop in fl.OwnedEntityType.GetProperties())
-                        prop.SetColumnName(prop.Name.ToLower());
-                });
-            });
+            
         }
     }
 }
+
 
