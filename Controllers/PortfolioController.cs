@@ -185,14 +185,14 @@ public class PortfolioController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        if (portfolio.User != null)
-        {
-            portfolio.InvestedAmount = (float)portfolio.TotalInvested;
-            portfolio.CurrentValue = (float)portfolio.CurrentValue;
-            portfolio.ProfitLoss = (float)portfolio.ProfitLoss;
-        }
+        // if (portfolio.User != null)
+        // {
+        //     portfolio.InvestedAmount = (float)portfolio.TotalInvested;
+        //     portfolio.CurrentValue = (float)portfolio.CurrentValue;
+        //     portfolio.ProfitLoss = (float)portfolio.ProfitLoss;
+        // }
 
-        await _context.SaveChangesAsync();
+        // await _context.SaveChangesAsync();
 
         return Ok(portfolio);
     }
@@ -324,4 +324,5 @@ public class PortfolioController : ControllerBase
 
 
 }
+
 
