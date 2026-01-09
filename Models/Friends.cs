@@ -1,14 +1,15 @@
-namespace TradingSimulator_Backend.Models
-{
-    public class Friends
-    {
-        public int Id { get; set; }
+using System.ComponentModel.DataAnnotations.Schema;
 
-        public int UserId { get; set; }
-        public User User { get; set; }
+namespace TradingSimulator_Backend.Models{
+    [Table("friends")]
+    public class Friends{
+        [Column("userid")]
+        public long UserId { get; set; }
 
-        public List<UserObj> FriendsList { get; set; } = new List<UserObj>();
-        public List<UserObj> SentRequests { get; set; } = new List<UserObj>();
-        public List<UserObj> ReceivedRequests { get; set; } = new List<UserObj>();
+        public User User { get; set; } = null!;
+
+        public List<UserObj> FriendsList { get; set; } = new();
+        public List<UserObj> SentRequests { get; set; } = new();
+        public List<UserObj> ReceivedRequests { get; set; } = new();
     }
 }
