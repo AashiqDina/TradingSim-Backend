@@ -1,7 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace TradingSimulator_Backend.Models{
-    [Table("friends")]
     public class Friends{
         [Column("userid")]
         public long UserId { get; set; }
@@ -12,4 +10,5 @@ namespace TradingSimulator_Backend.Models{
         public List<UserObj> SentRequests { get; set; } = new();
         public List<UserObj> ReceivedRequests { get; set; } = new();
     }
-}
+
+
