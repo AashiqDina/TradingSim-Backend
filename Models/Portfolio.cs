@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
+using System.Linq;
 
 public class Portfolio{
     [Column("id")]
@@ -20,3 +23,4 @@ public class Portfolio{
     [NotMapped]
     public decimal ProfitLoss => CurrentValue - TotalInvested;
 }
+
