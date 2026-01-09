@@ -1,3 +1,4 @@
+
 public class Stock{
     [Column("id")]
     public long Id { get; set; }
@@ -17,10 +18,14 @@ public class Stock{
     [Column("portfolio_id")]
     public long PortfolioId { get; set; }
 
+    [ForeignKey("PortfolioId")]
     [System.Text.Json.Serialization.JsonIgnore]
-    public Portfolio Portfolio { get; set; }
+    public Portfolio Portfolio { get; set; } = null!;
 
+    public decimal TotalValue => CurrentPrice * Quantity;
+    public decimal ProfitLoss => (CurrentPrice - PurchasePrice) * Quantity;
 
     public ICollection<StockHistory> History { get; set; } = new List<StockHistory>();
 }
+
 
