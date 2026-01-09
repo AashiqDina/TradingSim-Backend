@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
+using System.Linq;
 
 public class Stock{
     [Column("id")]
@@ -27,5 +30,6 @@ public class Stock{
 
     public ICollection<StockHistory> History { get; set; } = new List<StockHistory>();
 }
+
 
 
