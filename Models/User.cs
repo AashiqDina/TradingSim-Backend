@@ -4,7 +4,7 @@ namespace TradingSimulator_Backend.Models{
     [Table("users")]
     public class User{
         [Column("id")]
-        public long Id { get; set; }   // bigint → long
+        public long Id { get; set; } 
 
         [Column("username")]
         public required string Username { get; set; }
@@ -13,7 +13,7 @@ namespace TradingSimulator_Backend.Models{
         public required string Password { get; set; }
 
         [Column("investedamount")]
-        public float InvestedAmount { get; set; }  // real → float
+        public float InvestedAmount { get; set; } 
 
         [Column("currentvalue")]
         public float CurrentValue { get; set; }
@@ -24,3 +24,4 @@ namespace TradingSimulator_Backend.Models{
         public Friends? Friends { get; set; }
     }
 }
+
