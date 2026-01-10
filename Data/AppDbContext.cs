@@ -43,36 +43,34 @@ namespace TradingSimulator_Backend.Data
                 .WithMany(p => p.Stocks)
                 .HasForeignKey(s => s.PortfolioId)
                 .OnDelete(DeleteBehavior.Cascade);
+                
+            modelBuilder.Entity<Friends>(f =>
+            {
+                f.HasKey(x => x.UserId);
+            
+                f.HasOne(x => x.User)
+                 .WithOne()
+                 .HasForeignKey<Friends>(x => x.UserId);
+            
+                f.HasMany(x => x.FriendsList)
+                 .WithMany()
+                 .UsingEntity(j => j.ToTable("friends_list"));
+            
+                f.HasMany(x => x.SentRequests)
+                 .WithMany()
+                 .UsingEntity(j => j.ToTable("friends_sentrequests"));
+            
+                f.HasMany(x => x.ReceivedRequests)
+                 .WithMany()
+                 .UsingEntity(j => j.ToTable("friends_receivedrequests"));
+            });
 
-                modelBuilder.Entity<Friends>(f =>
-                {
-                    f.HasKey(x => x.UserId);
-                
-                    f.HasOne(f => f.User)
-                     .WithOne()
-                     .HasForeignKey<Friends>(f => f.UserId)
-                     .OnDelete(DeleteBehavior.Cascade);
-                
-                    f.HasMany(f => f.FriendsList)
-                     .WithMany()
-                     .UsingEntity(j => j.ToTable("friends_list")
-                                         .HasKey("FriendsId", "UserId"));
-                
-                    f.HasMany(f => f.SentRequests)
-                     .WithMany()
-                     .UsingEntity(j => j.ToTable("friends_sentrequests")
-                                         .HasKey("FriendsId", "UserId"));
-                
-                    f.HasMany(f => f.ReceivedRequests)
-                     .WithMany()
-                     .UsingEntity(j => j.ToTable("friends_receivedrequests")
-                                         .HasKey("FriendsId", "UserId"));
-                });
 
 
             
         }
     }
 }
+
 
 
