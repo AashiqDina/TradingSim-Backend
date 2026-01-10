@@ -12,7 +12,6 @@ namespace TradingSimulator_Backend.Data
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<StockLogoName> StockLogoName { get; set; }
         public DbSet<StockHistory> StockHistory { get; set; }
-        public DbSet<Friends> Friends { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -21,7 +20,14 @@ namespace TradingSimulator_Backend.Data
             modelBuilder.Entity<Stock>().ToTable("stocks");
             modelBuilder.Entity<StockLogoName>().ToTable("stocklogoname");
             modelBuilder.Entity<StockHistory>().ToTable("stockhistory");
-            modelBuilder.Entity<Friends>().ToTable("friends");
+
+            modelBuilder.Entity<User>()
+                .OwnsOne(u => u.Friends, f =>
+                {
+                    f.OwnsMany(x => x.FriendsList);
+                    f.OwnsMany(x => x.SentRequests);
+                    f.OwnsMany(x => x.ReceivedRequests);
+                });
 
             modelBuilder.Entity<Portfolio>()
                 .HasOne(p => p.User)
@@ -43,34 +49,11 @@ namespace TradingSimulator_Backend.Data
                 .WithMany(p => p.Stocks)
                 .HasForeignKey(s => s.PortfolioId)
                 .OnDelete(DeleteBehavior.Cascade);
-                
-            modelBuilder.Entity<Friends>(f =>
-            {
-                f.HasKey(x => x.UserId);
-            
-                f.HasOne(x => x.User)
-                 .WithOne()
-                 .HasForeignKey<Friends>(x => x.UserId);
-            
-                f.HasMany(x => x.FriendsList)
-                 .WithMany()
-                 .UsingEntity(j => j.ToTable("friends_list"));
-            
-                f.HasMany(x => x.SentRequests)
-                 .WithMany()
-                 .UsingEntity(j => j.ToTable("friends_sentrequests"));
-            
-                f.HasMany(x => x.ReceivedRequests)
-                 .WithMany()
-                 .UsingEntity(j => j.ToTable("friends_receivedrequests"));
-            });
-
-
-
             
         }
     }
 }
+
 
 
 
