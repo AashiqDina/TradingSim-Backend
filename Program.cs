@@ -12,7 +12,7 @@ builder.Services.AddControllers()
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", 
+    options.AddPolicy("AllowGitHubPages", 
         policy =>
         {
             policy.WithOrigins("https://aashiqdina.github.io")
@@ -65,6 +65,7 @@ app.MapControllers();
 
 
 app.Run();
+
 
 
 
