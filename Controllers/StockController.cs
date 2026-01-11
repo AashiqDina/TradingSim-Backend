@@ -23,6 +23,14 @@ namespace TradingSimulator_Backend.Controllers
             _context = context; 
         }
 
+        [HttpGet("DeleteImageName/{*symbol}")]
+        public async Task<IActionResult> DeleteStockLogo(string symbol)
+        {
+            var response = await _stockService.DeleteStockLogo(symbol);
+
+            return Ok(true);
+        }
+
         [HttpGet("{*symbol}")]
         public async Task<IActionResult> GetStockPrice(string symbol)
         {
@@ -235,3 +243,4 @@ namespace TradingSimulator_Backend.Controllers
         }
     }
 }
+
