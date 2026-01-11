@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TradingSimulator_Backend.Data;
 using TradingSimulator_Backend.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
@@ -12,14 +13,13 @@ builder.Services.AddControllers()
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowGitHubPages", 
-        policy =>
-        {
-            policy.WithOrigins("https://aashiqdina.github.io")
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials();
-        });
+    options.AddPolicy("AllowGitHubPages", policy =>
+    {
+        policy.WithOrigins("https://aashiqdina.github.io")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -39,7 +39,6 @@ builder.Services.AddScoped<IStockService, StockService>();
 builder.Services.AddHttpClient<StockService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddHttpClient<NewsService>();
-
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -63,12 +62,4 @@ app.UseSession();
 app.UseAuthorization();
 app.MapControllers();
 
-
-
 app.Run();
-
-
-
-
-
-
