@@ -45,14 +45,14 @@ namespace TradingSimulator_Backend.Services
         
             if (dbStock is null)
             {
-                return false
+                return false;
             }
         
             // Remove from DB
             _context.StockLogoName.Remove(dbStock);
             await _context.SaveChangesAsync();
         
-            return true
+            return true;
         }
 
 
@@ -660,6 +660,7 @@ namespace TradingSimulator_Backend.Services
         }
     }
 }
+
 
 
 
