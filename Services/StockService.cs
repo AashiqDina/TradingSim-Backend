@@ -35,6 +35,40 @@ namespace TradingSimulator_Backend.Services
             return TrendingList;
         }
 
+        public async Task<ApiResponse<bool>> DeleteStockLogo(string symbol)
+        {
+            // 1. Remove from cache if present
+            if (_stockImageCache.ContainsKey(symbol))
+            {
+                _stockImageCache.Remove(symbol);
+            }
+        
+            // 2. Find DB record
+            var dbStock = await _context.StockLogoName.FindAsync(symbol);
+        
+            if (dbStock == null)
+            {
+                return new ApiResponse<bool>
+                {
+                    Data = false,
+                    HasError = true,
+                    ErrorCode = "NOT_FOUND"
+                };
+            }
+        
+            // 3. Remove from DB
+            _context.StockLogoName.Remove(dbStock);
+            await _context.SaveChangesAsync();
+        
+            return new ApiResponse<bool>
+            {
+                Data = true,
+                HasError = false,
+                ErrorCode = null
+            };
+        }
+
+
         public void updateTrendingMap(string symbol)
         {
             if (DateTime.UtcNow.Date > TrendingMap.Timestamp.Date)
@@ -639,5 +673,6 @@ namespace TradingSimulator_Backend.Services
         }
     }
 }
+
 
 
