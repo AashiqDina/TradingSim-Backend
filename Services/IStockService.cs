@@ -6,7 +6,7 @@ using TradingSimulator_Backend.Models;
 
 public interface IStockService
 {
-    Task<ApiResponse<bool>> DeleteStockLogo(string symbol);
+    Task<bool> DeleteStockLogo(string symbol);
     Task<ApiResponse<decimal?>?> GetStockPriceAsync(string symbol);
     Task<Dictionary<string, ApiResponse<decimal?>?>> GetMultipleStockPricesAsync(List<string> symbols);
     Task<ApiResponse<string?>?> GetStockImage(string symbol);
@@ -21,4 +21,5 @@ public interface IStockService
     string[] getTrendingList();
     void updateTrendingMap(string symbol);
 }
+
 
