@@ -46,7 +46,7 @@ namespace TradingSimulator_Backend.Services
             // 2. Find DB record
             var dbStock = await _context.StockLogoName.FindAsync(symbol);
         
-            if (dbStock == null)
+            if (dbStock is null)
             {
                 return new ApiResponse<bool>
                 {
@@ -67,6 +67,7 @@ namespace TradingSimulator_Backend.Services
                 ErrorCode = null
             };
         }
+        
 
 
         public void updateTrendingMap(string symbol)
@@ -673,6 +674,7 @@ namespace TradingSimulator_Backend.Services
         }
     }
 }
+
 
 
 
