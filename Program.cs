@@ -17,7 +17,7 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins("https://aashiqdina.github.io")
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
                 .AllowCredentials();
         });
 });
@@ -66,6 +66,7 @@ app.MapControllers();
 
 
 app.Run();
+
 
 
 
