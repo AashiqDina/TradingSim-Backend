@@ -15,10 +15,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", 
         policy =>
         {
-            policy.WithOrigins("http://localhost:5048")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
+            policy.WithOrigins("https://aashiqdina.github.io")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
         });
 });
 
@@ -64,4 +63,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
 
