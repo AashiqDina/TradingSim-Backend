@@ -37,13 +37,10 @@ namespace TradingSimulator_Backend.Services
 
         public async Task<ApiResponse<bool>> DeleteStockLogo(string symbol)
         {
-            // 1. Remove from cache if present
-            if (_stockImageCache.ContainsKey(symbol))
-            {
-                _stockImageCache.Remove(symbol, out _);
-            }
+            // Remove from cache (safe even if key doesn't exist)
+            _stockImageCache.Remove(symbol, out _);
         
-            // 2. Find DB record
+            // Find DB record
             var dbStock = await _context.StockLogoName.FindAsync(symbol);
         
             if (dbStock is null)
@@ -56,7 +53,7 @@ namespace TradingSimulator_Backend.Services
                 };
             }
         
-            // 3. Remove from DB
+            // Remove from DB
             _context.StockLogoName.Remove(dbStock);
             await _context.SaveChangesAsync();
         
@@ -67,7 +64,6 @@ namespace TradingSimulator_Backend.Services
                 ErrorCode = null
             };
         }
-        
 
 
         public void updateTrendingMap(string symbol)
@@ -674,6 +670,7 @@ namespace TradingSimulator_Backend.Services
         }
     }
 }
+
 
 
 
