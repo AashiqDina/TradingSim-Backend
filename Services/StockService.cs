@@ -40,7 +40,7 @@ namespace TradingSimulator_Backend.Services
             // 1. Remove from cache if present
             if (_stockImageCache.ContainsKey(symbol))
             {
-                _stockImageCache.Remove(symbol);
+                _stockImageCache.Remove(symbol, out _);
             }
         
             // 2. Find DB record
@@ -673,6 +673,7 @@ namespace TradingSimulator_Backend.Services
         }
     }
 }
+
 
 
 
