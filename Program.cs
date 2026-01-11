@@ -57,11 +57,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
-app.UseCors("AllowAll");
+app.UseCors("AllowGitHubPages");
 app.UseSession();
 app.UseAuthorization();
 app.MapControllers();
 
+
+
 app.Run();
+
 
 
