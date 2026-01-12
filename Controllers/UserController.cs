@@ -251,61 +251,43 @@ public async Task<IActionResult> SendFriendRequest(int userId, int friendId)
         return user.Friends;
     }
 
-   [HttpGet("Get-Sent-Request/{userId}")]
-    public async Task<IActionResult> GetSentRequests(int userId)
-    {
-        var user = await _context.Users
-            .Include(u => u.Friends)
-            .FirstOrDefaultAsync(u => u.Id == userId);
-    
-        if (user == null)
-        {
-            return NotFound(new ApiResponse<string>
-            {
-                HasError = true,
-                ErrorCode = 404,
-                Data = "User not found."
-            });
-        }
-    
-        var friends = EnsureFriendsExists(user);
-    
-        await _context.SaveChangesAsync();
-    
-        return Ok(new ApiResponse<List<UserObj>>
-        {
-            Data = friends.SentRequests,
-            HasError = false
-        });
-    }
+[HttpGet("Get-Sent-Request/{userId}")]
+public async Task<IActionResult> GetSentRequests(int userId)
+{
+    var user = await _context.Users
+        .Include(u => u.Friends)
+        .FirstOrDefaultAsync(u => u.Id == userId);
 
-   [HttpGet("Get-Received-Request/{userId}")]
-    public async Task<IActionResult> GetReceivedRequests(int userId)
+    if (user == null)
+        return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
+
+    var friends = await EnsureFriendsExists(user);
+
+    return Ok(new ApiResponse<List<UserObj>>
     {
-        var user = await _context.Users
-            .Include(u => u.Friends)
-            .FirstOrDefaultAsync(u => u.Id == userId);
-    
-        if (user == null)
-        {
-            return NotFound(new ApiResponse<string>
-            {
-                HasError = true,
-                ErrorCode = 404,
-                Data = "User not found."
-            });
-        }
-    
-        var friends = EnsureFriendsExists(user); 
-    
-        await _context.SaveChangesAsync();
-    
-        return Ok(new ApiResponse<List<UserObj>>
-        {
-            Data = friends.ReceivedRequests,
-            HasError = false
-        });
-    }
+        Data = friends.SentRequests,
+        HasError = false
+    });
+}
+
+[HttpGet("Get-Received-Request/{userId}")]
+public async Task<IActionResult> GetReceivedRequests(int userId)
+{
+    var user = await _context.Users
+        .Include(u => u.Friends)
+        .FirstOrDefaultAsync(u => u.Id == userId);
+
+    if (user == null)
+        return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
+
+    var friends = await EnsureFriendsExists(user);
+
+    return Ok(new ApiResponse<List<UserObj>>
+    {
+        Data = friends.ReceivedRequests,
+        HasError = false
+    });
+}
     
     [HttpGet("Get-Friends/{userId}")]
     public async Task<IActionResult> GetFriends(int userId)
@@ -513,6 +495,7 @@ public async Task<IActionResult> SendFriendRequest(int userId, int friendId)
 
 }
 }
+
 
 
 
