@@ -23,18 +23,18 @@ namespace TradingSimulator_Backend.Data
             modelBuilder.Entity<StockLogoName>().ToTable("stocklogoname");
             modelBuilder.Entity<StockHistory>().ToTable("stockhistory");
 
-            // modelBuilder.Entity<User>()
-            //     .OwnsOne(u => u.Friends, f =>
-            //     {
-            //         f.OwnsMany(x => x.FriendsList);
-            //         f.OwnsMany(x => x.SentRequests);
-            //         f.OwnsMany(x => x.ReceivedRequests);
-            //     });
-
             modelBuilder.Entity<User>()
-                .HasOne(u => u.Friends)
-                .WithOne(f => f.User)
-                .HasForeignKey<Friends>(f => f.UserId);
+                .OwnsOne(u => u.Friends, f =>
+                {
+                    f.OwnsMany(x => x.FriendsList);
+                    f.OwnsMany(x => x.SentRequests);
+                    f.OwnsMany(x => x.ReceivedRequests);
+                });
+
+            // modelBuilder.Entity<User>()
+            //     .HasOne(u => u.Friends)
+            //     .WithOne(f => f.User)
+            //     .HasForeignKey<Friends>(f => f.UserId);
 
             modelBuilder.Entity<Friends>()
                 .HasOne(f => f.User)
@@ -65,6 +65,7 @@ namespace TradingSimulator_Backend.Data
         }
     }
 }
+
 
 
 
