@@ -8,6 +8,7 @@ namespace TradingSimulator_Backend.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Friends> Friends { get; set; } = null!;
         public DbSet<Portfolio> Portfolios { get; set; }
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<StockLogoName> StockLogoName { get; set; }
@@ -16,18 +17,29 @@ namespace TradingSimulator_Backend.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>().ToTable("users");
+            modelBuilder.Entity<Friends>().ToTable("friends");
             modelBuilder.Entity<Portfolio>().ToTable("portfolios");
             modelBuilder.Entity<Stock>().ToTable("stocks");
             modelBuilder.Entity<StockLogoName>().ToTable("stocklogoname");
             modelBuilder.Entity<StockHistory>().ToTable("stockhistory");
 
+            // modelBuilder.Entity<User>()
+            //     .OwnsOne(u => u.Friends, f =>
+            //     {
+            //         f.OwnsMany(x => x.FriendsList);
+            //         f.OwnsMany(x => x.SentRequests);
+            //         f.OwnsMany(x => x.ReceivedRequests);
+            //     });
+
             modelBuilder.Entity<User>()
-                .OwnsOne(u => u.Friends, f =>
-                {
-                    f.OwnsMany(x => x.FriendsList);
-                    f.OwnsMany(x => x.SentRequests);
-                    f.OwnsMany(x => x.ReceivedRequests);
-                });
+                .HasOne(u => u.Friends)
+                .WithOne(f => f.User)
+                .HasForeignKey<Friends>(f => f.UserId);
+
+            modelBuilder.Entity<Friends>()
+                .HasOne(f => f.User)
+                .WithOne(u => u.Friends)
+                .HasForeignKey<Friends>(f => f.UserId);
 
             modelBuilder.Entity<Portfolio>()
                 .HasOne(p => p.User)
@@ -53,6 +65,7 @@ namespace TradingSimulator_Backend.Data
         }
     }
 }
+
 
 
 
