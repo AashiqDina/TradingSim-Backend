@@ -230,7 +230,7 @@ public async Task<IActionResult> SendFriendRequest(int userId, int friendId)
     });
 }
 
-    private Friends EnsureFriendsExists(User user)
+    private async Task<Friends> EnsureFriendsExists(User user)
     {
         if (user.Friends == null)
         {
@@ -244,11 +244,12 @@ public async Task<IActionResult> SendFriendRequest(int userId, int friendId)
     
             _context.Friends.Add(friends);
             user.Friends = friends;
+    
+            await _context.SaveChangesAsync(); // async save
         }
     
         return user.Friends;
     }
-
 
    [HttpGet("Get-Sent-Request/{userId}")]
     public async Task<IActionResult> GetSentRequests(int userId)
@@ -512,6 +513,7 @@ public async Task<IActionResult> SendFriendRequest(int userId, int friendId)
 
 }
 }
+
 
 
 
