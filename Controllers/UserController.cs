@@ -243,13 +243,14 @@ public async Task<IActionResult> SendFriendRequest(int userId, int friendId)
             };
     
             _context.Friends.Add(friends);
-            user.Friends = friends;
+            await _context.SaveChangesAsync();
     
-            await _context.SaveChangesAsync(); // async save
+            user.Friends = friends;
         }
     
         return user.Friends;
     }
+
 
 [HttpGet("Get-Sent-Request/{userId}")]
 public async Task<IActionResult> GetSentRequests(int userId)
@@ -495,6 +496,7 @@ public async Task<IActionResult> GetReceivedRequests(int userId)
 
 }
 }
+
 
 
 
