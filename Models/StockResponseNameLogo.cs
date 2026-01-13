@@ -1,4 +1,4 @@
-namespace TradingSimulator_Backend.Models
+namespace TradingSim-Backend.Models
 {
     using Newtonsoft.Json;
     
@@ -32,3 +32,4 @@ namespace TradingSimulator_Backend.Models
         public string exchangeTimezone { get; set; }
     }
 }
+
