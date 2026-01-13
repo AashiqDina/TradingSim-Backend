@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace TradingSimulator_Backend.Models
+namespace TradingSim-Backend.Models
 {
      public class User
     {
@@ -68,5 +68,6 @@ namespace TradingSimulator_Backend.Models
         public float ProfitLoss { get; set; }
     }
 }
+
 
 
