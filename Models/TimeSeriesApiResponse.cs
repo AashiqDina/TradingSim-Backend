@@ -1,5 +1,5 @@
 using Newtonsoft.Json;
-using TradingSimulator_Backend.Models;
+using TradingSim-Backend.Models;
 
 public class TimeSeriesApiResponse
 {
@@ -11,4 +11,5 @@ public class TimeSeriesApiResponse
 
     [JsonProperty("values")]
     public List<StockFullHistoryPoint>? Values { get; set; }
+
 }
