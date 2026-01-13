@@ -30,16 +30,12 @@ namespace TradingSimulator_Backend.Models
         public ICollection<UserFriend> SentRequests { get; set; } = new List<UserFriend>();
     }
 
-    public class UserFriend
-    {
+   public class UserFriend
+     {
         public long Id { get; set; }
+        public long FriendsUserId { get; set; }
+        public User FriendsUser { get; set; } = null!;
 
-        // Foreign key to parent User
-        public long UserId { get; set; }
-        public User User { get; set; } = null!;
-
-        // Friend info
-        public long FriendId { get; set; }
         public string Username { get; set; } = string.Empty;
         public float ProfitLoss { get; set; }
     }
@@ -72,4 +68,5 @@ namespace TradingSimulator_Backend.Models
         public float ProfitLoss { get; set; }
     }
 }
+
 
