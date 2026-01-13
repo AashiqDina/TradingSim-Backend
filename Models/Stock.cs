@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 
-namespace TradingSimulator_Backend.Models
+namespace TradingSim-Backend.Models
 {
    public class Stock
     {
@@ -35,4 +35,5 @@ namespace TradingSimulator_Backend.Models
         public ICollection<StockHistory> History { get; set; } = new List<StockHistory>();
     }
 }
+
 
