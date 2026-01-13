@@ -1,3 +1,9 @@
+using System;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+
+using TradingSimulatorBackend.Models;
+
 public class StockHistory
     {
         [Column("id")]
@@ -19,3 +25,4 @@ public class StockHistory
         [Column("quantity")]
         public decimal Quantity { get; set; }
     }
+
