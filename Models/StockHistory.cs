@@ -1,26 +1,21 @@
-using System;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
-using TradingSimulator_Backend.Models;
-
 public class StockHistory
 {
-    [Column("id")]
+    [Column("Id")]
     public long Id { get; set; }
 
-    [Column("stockid")]
+    [Column("StockId")]
     public long StockId { get; set; }
 
     [ForeignKey("StockId")]
     [JsonIgnore]
     public Stock Stock { get; set; } = null!;
 
-    [Column("timestamp")]
+    [Column("Timestamp")]
     public DateTime Timestamp { get; set; }
 
-    [Column("price")]
+    [Column("Price")]
     public decimal Price { get; set; }
 
-    [Column("quantity")]
+    [Column("Quantity")]
     public decimal Quantity { get; set; }
 }
