@@ -10,6 +10,9 @@ namespace TradingSimulator_Backend.Data
 
         // Core tables
         public DbSet<User> Users { get; set; } = null!;
+        public DbSet<UserFriend> UsersFriendsList { get; set; } = null!;
+        public DbSet<UserSentRequest> UsersSentRequests { get; set; } = null!;
+        public DbSet<UserReceivedRequest> UsersReceivedRequests { get; set; } = null!;
         public DbSet<Portfolio> Portfolios { get; set; } = null!;
         public DbSet<Stock> Stocks { get; set; } = null!;
         public DbSet<StockLogoName> StockLogoName { get; set; } = null!;
@@ -19,35 +22,47 @@ namespace TradingSimulator_Backend.Data
         {
             // Table names
             modelBuilder.Entity<User>().ToTable("users");
+            modelBuilder.Entity<UserFriend>().ToTable("users_FriendsList");
+            modelBuilder.Entity<UserSentRequest>().ToTable("users_SentRequests");
+            modelBuilder.Entity<UserReceivedRequest>().ToTable("users_ReceivedRequests");
             modelBuilder.Entity<Portfolio>().ToTable("portfolios");
             modelBuilder.Entity<Stock>().ToTable("stocks");
             modelBuilder.Entity<StockLogoName>().ToTable("stocklogoname");
             modelBuilder.Entity<StockHistory>().ToTable("stockhistory");
 
-            // User -> Friends (owned entity)
-            modelBuilder.Entity<User>().OwnsOne(u => u.Friends, f =>
-            {
-                f.OwnsMany(x => x.FriendsList, fl =>
-                {
-                    fl.ToTable("users_FriendsList");
-                    fl.WithOwner().HasForeignKey("UserId"); // FK to parent user
-                    fl.HasKey("UserId", "Id");
-                });
+            // ----------------- FRIENDS & REQUESTS ----------------- //
 
-                f.OwnsMany(x => x.SentRequests, sr =>
-                {
-                    sr.ToTable("users_SentRequests");
-                    sr.WithOwner().HasForeignKey("UserId");
-                    sr.HasKey("UserId", "Id");
-                });
+            // UserFriend
+            modelBuilder.Entity<UserFriend>()
+                .HasKey(f => new { f.FriendsUserId, f.Id }); // Composite key
 
-                f.OwnsMany(x => x.ReceivedRequests, rr =>
-                {
-                    rr.ToTable("users_ReceivedRequests");
-                    rr.WithOwner().HasForeignKey("UserId");
-                    rr.HasKey("UserId", "Id");
-                });
-            });
+            modelBuilder.Entity<UserFriend>()
+                .HasOne(f => f.FriendsUser)
+                .WithMany(u => u.FriendsList)
+                .HasForeignKey(f => f.FriendsUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // UserSentRequest
+            modelBuilder.Entity<UserSentRequest>()
+                .HasKey(s => new { s.FriendsUserId, s.Id });
+
+            modelBuilder.Entity<UserSentRequest>()
+                .HasOne(s => s.FriendsUser)
+                .WithMany(u => u.SentRequests)
+                .HasForeignKey(s => s.FriendsUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // UserReceivedRequest
+            modelBuilder.Entity<UserReceivedRequest>()
+                .HasKey(r => new { r.FriendsUserId, r.Id });
+
+            modelBuilder.Entity<UserReceivedRequest>()
+                .HasOne(r => r.FriendsUser)
+                .WithMany(u => u.ReceivedRequests)
+                .HasForeignKey(r => r.FriendsUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ----------------- PORTFOLIO & STOCKS ----------------- //
 
             // Portfolio <-> User
             modelBuilder.Entity<Portfolio>()
