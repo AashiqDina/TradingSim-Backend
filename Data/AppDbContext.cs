@@ -5,7 +5,7 @@ namespace TradingSimulator_Backend.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) 
+        public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
 
         // Core tables
@@ -32,53 +32,37 @@ namespace TradingSimulator_Backend.Data
 
             // ----------------- FRIENDS & REQUESTS ----------------- //
 
-            // UserFriend
+            // UserFriend (composite key)
             modelBuilder.Entity<UserFriend>()
-                .HasKey(f => new { f.FriendsUserId, f.Id }); // Composite key
+                .HasKey(f => new { f.FriendsUserId, f.Id });
 
-            modelBuilder.Entity<UserFriend>()
-                .HasOne(f => f.FriendsUser)
-                .WithMany(u => u.FriendsList)
-                .HasForeignKey(f => f.FriendsUserId)
-                .OnDelete(DeleteBehavior.Cascade);
+            // No navigation properties — DB does not define them
 
-            // UserSentRequest
+            // UserSentRequest (composite key)
             modelBuilder.Entity<UserSentRequest>()
                 .HasKey(s => new { s.FriendsUserId, s.Id });
 
-            modelBuilder.Entity<UserSentRequest>()
-                .HasOne(s => s.FriendsUser)
-                .WithMany(u => u.SentRequests)
-                .HasForeignKey(s => s.FriendsUserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // UserReceivedRequest
+            // UserReceivedRequest (composite key)
             modelBuilder.Entity<UserReceivedRequest>()
                 .HasKey(r => new { r.FriendsUserId, r.Id });
 
-            modelBuilder.Entity<UserReceivedRequest>()
-                .HasOne(r => r.FriendsUser)
-                .WithMany(u => u.ReceivedRequests)
-                .HasForeignKey(r => r.FriendsUserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             // ----------------- PORTFOLIO & STOCKS ----------------- //
 
-            // Portfolio <-> User
+            // Portfolio <-> User (1:1)
             modelBuilder.Entity<Portfolio>()
                 .HasOne(p => p.User)
                 .WithOne(u => u.Portfolio)
                 .HasForeignKey<Portfolio>(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Stock <-> Portfolio
+            // Stock <-> Portfolio (1:N)
             modelBuilder.Entity<Stock>()
                 .HasOne(s => s.Portfolio)
                 .WithMany(p => p.Stocks)
                 .HasForeignKey(s => s.PortfolioId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // StockHistory <-> Stock
+            // StockHistory <-> Stock (1:N)
             modelBuilder.Entity<StockHistory>()
                 .HasOne(h => h.Stock)
                 .WithMany(s => s.History)
