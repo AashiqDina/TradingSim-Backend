@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TradingSim-Backend.Models
+namespace TradingSimulator_Backend.Models
 {
     public class StockFullHistory
     {
@@ -11,4 +11,5 @@ namespace TradingSim-Backend.Models
         public List<StockFullHistoryPoint> Values { get; set; } = new();
     }
 }
+
 
