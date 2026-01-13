@@ -84,16 +84,18 @@ namespace TradingSimulator_Backend.Controllers
             var exists = await _context.Users.AnyAsync(u => u.Username == request.Username);
             return Ok(new { exists });
         }
-
+        
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] User model)
+        public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == model.Username && u.Password == model.Password);
-
+                .FirstOrDefaultAsync(u =>
+                    u.Username == model.Username &&
+                    u.Password == model.Password);
+        
             if (user == null)
                 return Unauthorized(new { success = false, message = "Invalid username or password" });
-
+        
             return Ok(new
             {
                 success = true,
@@ -107,6 +109,7 @@ namespace TradingSimulator_Backend.Controllers
                 }
             });
         }
+
 
         [HttpPost("logout")]
         public IActionResult Logout()
@@ -299,6 +302,7 @@ public async Task<IActionResult> GetReceivedRequests(long userId)
 }
     }
 }
+
 
 
 
