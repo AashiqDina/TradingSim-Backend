@@ -1,35 +1,40 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 
-public class Stock{
-    [Column("id")]
-    public long Id { get; set; }
+namespace TradingSimulator_Backend.Models
+{
+    public class Stock
+    {
+        [Column("id")]
+        public long Id { get; set; }
 
-    [Column("symbol")]
-    public string Symbol { get; set; } = string.Empty;
+        [Column("symbol")]
+        public required string Symbol { get; set; }
 
-    [Column("purchase_price")]
-    public decimal PurchasePrice { get; set; }
+        [Column("purchase_price")]
+        public decimal PurchasePrice { get; set; }
 
-    [Column("quantity")]
-    public decimal Quantity { get; set; }
+        [Column("quantity")]
+        public decimal Quantity { get; set; }
 
-    [Column("current_price")]
-    public decimal CurrentPrice { get; set; }
+        [Column("current_price")]
+        public decimal CurrentPrice { get; set; }
 
-    [Column("portfolio_id")]
-    public long PortfolioId { get; set; }
+        [Column("portfolio_id")]
+        public long PortfolioId { get; set; }
 
-    [ForeignKey("PortfolioId")]
-    [System.Text.Json.Serialization.JsonIgnore]
-    public Portfolio Portfolio { get; set; } = null!;
+        [ForeignKey("PortfolioId")]
+        [JsonIgnore]
+        public Portfolio? Portfolio { get; set; }
 
-    public decimal TotalValue => CurrentPrice * Quantity;
-    public decimal ProfitLoss => (CurrentPrice - PurchasePrice) * Quantity;
+        [NotMapped]
+        public decimal TotalValue => CurrentPrice * Quantity;
 
-    public ICollection<StockHistory> History { get; set; } = new List<StockHistory>();
+        [NotMapped]
+        public decimal ProfitLoss => (CurrentPrice - PurchasePrice) * Quantity;
+
+        public ICollection<StockHistory> History { get; set; } = new List<StockHistory>();
+    }
 }
-
-
-
