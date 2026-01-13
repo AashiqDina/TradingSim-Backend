@@ -23,9 +23,9 @@ namespace TradingSimulator_Backend.Data
             // ----------------- TABLE NAMES ----------------- //
 
             modelBuilder.Entity<User>().ToTable("users");
-            modelBuilder.Entity<UserFriend>().ToTable("users_friendslist");
-            modelBuilder.Entity<UserSentRequest>().ToTable("users_sentrequests");
-            modelBuilder.Entity<UserReceivedRequest>().ToTable("users_receivedrequests");
+            modelBuilder.Entity<UserFriend>().ToTable("users_FriendsList");
+            modelBuilder.Entity<UserSentRequest>().ToTable("users_SentRequests");
+            modelBuilder.Entity<UserReceivedRequest>().ToTable("users_ReceivedRequests");
             modelBuilder.Entity<Portfolio>().ToTable("portfolios");
             modelBuilder.Entity<Stock>().ToTable("stocks");
             modelBuilder.Entity<StockLogoName>().ToTable("stocklogoname");
@@ -33,7 +33,6 @@ namespace TradingSimulator_Backend.Data
 
             // ----------------- FRIENDS & REQUESTS ----------------- //
             // These tables DO NOT have relationships in the DB.
-            // They must NOT have navigation properties or FK mappings.
 
             modelBuilder.Entity<UserFriend>()
                 .HasKey(f => new { f.FriendsUserId, f.Id });
