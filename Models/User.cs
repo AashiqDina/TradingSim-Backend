@@ -21,44 +21,34 @@ namespace TradingSimulator_Backend.Models
          public ICollection<UserReceivedRequest> ReceivedRequests { get; set; } = new List<UserReceivedRequest>();
      }
 
-   public class UserFriend
+     public class UserFriend
      {
-        public long Id { get; set; }
-        public long FriendsUserId { get; set; }
-        public User FriendsUser { get; set; } = null!;
+         public long Id { get; set; }
+         public long FriendsUserId { get; set; }
+     
+         public string Username { get; set; } = string.Empty;
+         public float ProfitLoss { get; set; }
+     }
 
-        public string Username { get; set; } = string.Empty;
-        public float ProfitLoss { get; set; }
-    }
+     public class UserSentRequest
+     {
+         public long Id { get; set; }
+         public long FriendsUserId { get; set; }
+     
+         public string Username { get; set; } = string.Empty;
+         public float ProfitLoss { get; set; }
+     }
 
-    public class UserSentRequest
-    {
-        public long Id { get; set; }
-
-        // Foreign key to parent User
-        public long UserId { get; set; }
-        public User User { get; set; } = null!;
-
-        // Target user info
-        public long TargetUserId { get; set; }
-        public string Username { get; set; } = string.Empty;
-        public float ProfitLoss { get; set; }
-    }
-
-    public class UserReceivedRequest
-    {
-        public long Id { get; set; }
-
-        // Foreign key to parent User
-        public long UserId { get; set; }
-        public User User { get; set; } = null!;
-
-        // Request sender info
-        public long FromUserId { get; set; }
-        public string Username { get; set; } = string.Empty;
-        public float ProfitLoss { get; set; }
-    }
+     public class UserReceivedRequest
+     {
+         public long Id { get; set; }
+         public long FriendsUserId { get; set; }
+     
+         public string Username { get; set; } = string.Empty;
+         public float ProfitLoss { get; set; }
+     }
 }
+
 
 
 
