@@ -37,7 +37,7 @@ namespace TradingSimulator_Backend.Models
         public User FriendsUser { get; set; } = null!;
 
         public string Username { get; set; } = string.Empty;
-        public float ProfitLoss { get; set; }
+        public decimal ProfitLoss { get; set; }
     }
 
     public class UserSentRequest
@@ -51,7 +51,7 @@ namespace TradingSimulator_Backend.Models
         // Target user info
         public long TargetUserId { get; set; }
         public string Username { get; set; } = string.Empty;
-        public float ProfitLoss { get; set; }
+        public decimal ProfitLoss { get; set; }
     }
 
     public class UserReceivedRequest
@@ -65,9 +65,10 @@ namespace TradingSimulator_Backend.Models
         // Request sender info
         public long FromUserId { get; set; }
         public string Username { get; set; } = string.Empty;
-        public float ProfitLoss { get; set; }
+        public decimal ProfitLoss { get; set; }
     }
 }
+
 
 
 
