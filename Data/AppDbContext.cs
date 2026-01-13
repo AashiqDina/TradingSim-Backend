@@ -25,27 +25,32 @@ namespace TradingSimulator_Backend.Data
             {
                 u.OwnsOne(u => u.Friends, f =>
                 {
-                    f.ToTable("friends");
-                    f.WithOwner();
-                    f.OwnsMany(x => x.FriendsList, fl => fl.ToTable("users_FriendsList"));
-                    f.OwnsMany(x => x.SentRequests, sr => sr.ToTable("users_SentRequests"));
-                    f.OwnsMany(x => x.ReceivedRequests, rr => rr.ToTable("users_ReceivedRequests"));
+                    f.ToTable("users_FriendsList");
+                    f.OwnsMany(x => x.FriendsList, fl =>
+                    {
+                        fl.ToTable("users_FriendsList");
+                        fl.WithOwner().HasForeignKey("FriendsUserId");
+                        fl.HasKey("FriendsUserId", "Id");
+                    });
+                    f.OwnsMany(x => x.SentRequests, sr =>
+                    {
+                        sr.ToTable("users_SentRequests");
+                        sr.WithOwner().HasForeignKey("FriendsUserId");
+                        sr.HasKey("FriendsUserId", "Id");
+                    });
+                    f.OwnsMany(x => x.ReceivedRequests, rr =>
+                    {
+                        rr.ToTable("users_ReceivedRequests");
+                        rr.WithOwner().HasForeignKey("FriendsUserId");
+                        rr.HasKey("FriendsUserId", "Id");
+                    });
                 });
             });
 
             modelBuilder.Entity<Portfolio>()
                 .HasOne(p => p.User)
-                .WithOne(u => u.Portfolio)
+                .WithOne()
                 .HasForeignKey<Portfolio>(p => p.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<StockLogoName>()
-                .HasKey(s => s.Symbol);
-
-            modelBuilder.Entity<StockHistory>()
-                .HasOne(h => h.Stock)
-                .WithMany(s => s.History)
-                .HasForeignKey(h => h.StockId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Stock>()
@@ -53,9 +58,19 @@ namespace TradingSimulator_Backend.Data
                 .WithMany(p => p.Stocks)
                 .HasForeignKey(s => s.PortfolioId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<StockHistory>()
+                .HasOne(h => h.Stock)
+                .WithMany(s => s.History)
+                .HasForeignKey(h => h.StockId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<StockLogoName>()
+                .HasKey(s => s.Symbol);
         }
     }
 }
+
 
 // using Microsoft.EntityFrameworkCore;
 // using TradingSimulator_Backend.Models;
@@ -169,6 +184,7 @@ namespace TradingSimulator_Backend.Data
 //         // }
 //     }
 // }
+
 
 
 
