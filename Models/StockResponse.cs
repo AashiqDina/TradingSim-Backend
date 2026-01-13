@@ -1,4 +1,4 @@
-namespace TradingSim-Backend.Models{
+namespace TradingSimulator_Backend.Models{
     using Newtonsoft.Json;
     using System;
 
@@ -10,3 +10,4 @@ namespace TradingSim-Backend.Models{
     }
 
 }
+
