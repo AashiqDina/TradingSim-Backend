@@ -151,389 +151,180 @@ public async Task<IActionResult> RegisterUser([FromBody] User user)
         }
 
         return Ok(new { username });
-    }
-  [HttpPost("Send-Friend-Request/{userId}/{friendId}")]
-public async Task<IActionResult> SendFriendRequest(int userId, int friendId)
-{
-    if (userId == friendId)
-    {
-        return BadRequest(new ApiResponse<string>
+    }[HttpPost("Send-Friend-Request/{userId}/{friendId}")]
+        public async Task<IActionResult> SendFriendRequest(int userId, int friendId)
         {
-            HasError = true,
-            ErrorCode = 400,
-            Data = "You cannot send a friend request to yourself."
-        });
-    }
+            if (userId == friendId)
+                return BadRequest(new ApiResponse<string> { HasError = true, ErrorCode = 400, Data = "Cannot send request to yourself." });
 
-    // Include the owned Friends entity and its collections
-    var user = await _context.Users
-        .Include(u => u.Friends)
-            .ThenInclude(f => f.FriendsList)
-        .Include(u => u.Friends)
-            .ThenInclude(f => f.SentRequests)
-        .Include(u => u.Friends)
-            .ThenInclude(f => f.ReceivedRequests)
-        .FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == userId);
+            var friend = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == friendId);
 
-    var friend = await _context.Users
-        .Include(u => u.Friends)
-            .ThenInclude(f => f.FriendsList)
-        .Include(u => u.Friends)
-            .ThenInclude(f => f.SentRequests)
-        .Include(u => u.Friends)
-            .ThenInclude(f => f.ReceivedRequests)
-        .FirstOrDefaultAsync(u => u.Id == friendId);
+            if (user == null || friend == null)
+                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
 
-    if (user == null || friend == null)
-    {
-        return NotFound(new ApiResponse<string>
-        {
-            HasError = true,
-            ErrorCode = 404,
-            Data = "User not found."
-        });
-    }
+            var userFriends = await EnsureFriendsExists(user);
+            var friendFriends = await EnsureFriendsExists(friend);
 
-    // Ensure Friends entity exists (owned entity may be null initially)
-    if (user.Friends == null)
-    {
-        user.Friends = new Friends
-        {
-            FriendsList = new List<UserObj>(),
-            SentRequests = new List<UserObj>(),
-            ReceivedRequests = new List<UserObj>()
-        };
-    }
+            if (userFriends.FriendsList.Any(f => f.Id == friendId))
+                return BadRequest(new ApiResponse<string> { HasError = true, ErrorCode = 400, Data = "Already friends." });
 
-    if (friend.Friends == null)
-    {
-        friend.Friends = new Friends
-        {
-            FriendsList = new List<UserObj>(),
-            SentRequests = new List<UserObj>(),
-            ReceivedRequests = new List<UserObj>()
-        };
-    }
+            if (userFriends.SentRequests.Any(f => f.Id == friendId))
+                return BadRequest(new ApiResponse<string> { HasError = true, ErrorCode = 400, Data = "Request already sent." });
 
-    // Check if already friends
-    if (user.Friends.FriendsList.Any(f => f.Id == friendId))
-    {
-        return BadRequest(new ApiResponse<string>
-        {
-            HasError = true,
-            ErrorCode = 400,
-            Data = "You are already friends."
-        });
-    }
+            userFriends.SentRequests.Add(new UserObj { Id = friend.Id, Username = friend.Username, ProfitLoss = friend.ProfitLoss });
+            friendFriends.ReceivedRequests.Add(new UserObj { Id = user.Id, Username = user.Username, ProfitLoss = user.ProfitLoss });
 
-    // Check if friend request already exists
-    if (user.Friends.SentRequests.Any(r => r.Id == friendId) ||
-        friend.Friends.ReceivedRequests.Any(r => r.Id == userId))
-    {
-        return BadRequest(new ApiResponse<string>
-        {
-            HasError = true,
-            ErrorCode = 400,
-            Data = "Friend request already sent."
-        });
-    }
+            await _context.SaveChangesAsync();
 
-    // Add the friend request
-    user.Friends.SentRequests.Add(new UserObj
-    {
-        Id = friend.Id,
-        Username = friend.Username,
-        ProfitLoss = friend.ProfitLoss
-    });
-
-    friend.Friends.ReceivedRequests.Add(new UserObj
-    {
-        Id = user.Id,
-        Username = user.Username,
-        ProfitLoss = user.ProfitLoss
-    });
-
-    await _context.SaveChangesAsync();
-
-    return Ok(new ApiResponse<string>
-    {
-        HasError = false,
-        Data = "Friend request sent successfully."
-    });
-}
-
-private Task<Friends> EnsureFriendsExists(User user)
-{
-    if (user.Friends == null)
-    {
-        user.Friends = new Friends
-        {
-            FriendsList = new List<UserObj>(),
-            SentRequests = new List<UserObj>(),
-            ReceivedRequests = new List<UserObj>()
-        };
-    }
-
-    return Task.FromResult(user.Friends);
-}
-
-[HttpGet("Get-Sent-Request/{userId}")]
-public async Task<IActionResult> GetSentRequests(int userId)
-{
-    var user = await _context.Users
-        .Include(u => u.Friends) // Include the owned entity
-        .FirstOrDefaultAsync(u => u.Id == userId);
-
-    if (user == null)
-        return NotFound(new ApiResponse<string>
-        {
-            HasError = true,
-            ErrorCode = 404,
-            Data = "User not found."
-        });
-
-    // Ensure the Friends owned entity exists
-    var friends = await EnsureFriendsExists(user);
-
-    return Ok(new ApiResponse<List<UserObj>>
-    {
-        Data = friends.SentRequests,
-        HasError = false
-    });
-}
-
-[HttpGet("Get-Received-Request/{userId}")]
-public async Task<IActionResult> GetReceivedRequests(int userId)
-{
-    var user = await _context.Users
-        .Include(u => u.Friends) // Load the owned Friends entity
-        .FirstOrDefaultAsync(u => u.Id == userId);
-
-    if (user == null)
-        return NotFound(new ApiResponse<string>
-        {
-            HasError = true,
-            ErrorCode = 404,
-            Data = "User not found."
-        });
-
-    // Ensure the Friends entity exists
-    var friends = await EnsureFriendsExists(user);
-
-    return Ok(new ApiResponse<List<UserObj>>
-    {
-        Data = friends.ReceivedRequests,
-        HasError = false
-    });
-}
-
-    
-   [HttpGet("Get-Friends/{userId}")]
-public async Task<IActionResult> GetFriends(int userId)
-{
-    var user = await _context.Users
-        .Include(u => u.Friends) // Load the owned Friends entity
-        .FirstOrDefaultAsync(u => u.Id == userId);
-
-    if (user == null)
-    {
-        return NotFound(new ApiResponse<string>
-        {
-            HasError = true,
-            ErrorCode = 404,
-            Data = "User not found."
-        });
-    }
-
-    // Ensure the Friends entity exists
-    var friends = await EnsureFriendsExists(user);
-
-    if (friends.FriendsList.Count == 0)
-    {
-        return Ok(new ApiResponse<List<UserObj>>
-        {
-            Data = new List<UserObj>(),
-            HasError = false
-        });
-    }
-
-    // Get the latest profit/loss values from the database
-    var friendIds = friends.FriendsList.Select(f => f.Id).ToList();
-    var dbFriends = await _context.Users
-        .Where(u => friendIds.Contains(u.Id))
-        .ToListAsync();
-
-    foreach (var friendObj in friends.FriendsList)
-    {
-        var dbFriend = dbFriends.FirstOrDefault(f => f.Id == friendObj.Id);
-        if (dbFriend != null)
-        {
-            friendObj.ProfitLoss = dbFriend.ProfitLoss;
+            return Ok(new ApiResponse<string> { HasError = false, Data = "Friend request sent successfully." });
         }
-    }
 
-    await _context.SaveChangesAsync();
-
-    return Ok(new ApiResponse<List<UserObj>>
-    {
-        Data = friends.FriendsList,
-        HasError = false
-    });
-}
-
-[HttpPost("Accept-Request/{userId}/{friendId}")]
-public async Task<IActionResult> AcceptFriendRequest(int userId, int friendId)
-{
-    var user = await _context.Users
-        .Include(u => u.Friends) // Include the owned Friends entity
-        .FirstOrDefaultAsync(u => u.Id == userId);
-
-    var friend = await _context.Users
-        .Include(u => u.Friends)
-        .FirstOrDefaultAsync(u => u.Id == friendId);
-
-    if (user == null || friend == null)
-    {
-        return NotFound(new ApiResponse<string>
+        // Accept Friend Request
+        [HttpPost("Accept-Request/{userId}/{friendId}")]
+        public async Task<IActionResult> AcceptFriendRequest(int userId, int friendId)
         {
-            Data = "User not found",
-            HasError = true,
-            ErrorCode = 404
-        });
-    }
+            var user = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == userId);
+            var friend = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == friendId);
 
-    // Ensure Friends entities exist for both users
-    var userFriends = await EnsureFriendsExists(user);
-    var friendFriends = await EnsureFriendsExists(friend);
+            if (user == null || friend == null)
+                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
 
-    // Check if the request exists
-    var requestInReceived = userFriends.ReceivedRequests.FirstOrDefault(r => r.Id == friendId);
-    var requestInSent = friendFriends.SentRequests.FirstOrDefault(r => r.Id == userId);
+            var userFriends = await EnsureFriendsExists(user);
+            var friendFriends = await EnsureFriendsExists(friend);
 
-    if (requestInReceived == null || requestInSent == null)
-    {
-        return BadRequest(new ApiResponse<string>
+            var requestInReceived = userFriends.ReceivedRequests.FirstOrDefault(r => r.Id == friendId);
+            var requestInSent = friendFriends.SentRequests.FirstOrDefault(r => r.Id == userId);
+
+            if (requestInReceived == null || requestInSent == null)
+                return BadRequest(new ApiResponse<string> { HasError = true, ErrorCode = 400, Data = "No pending request found." });
+
+            userFriends.ReceivedRequests.Remove(requestInReceived);
+            friendFriends.SentRequests.Remove(requestInSent);
+
+            userFriends.FriendsList.Add(new UserObj { Id = friend.Id, Username = friend.Username, ProfitLoss = friend.ProfitLoss });
+            friendFriends.FriendsList.Add(new UserObj { Id = user.Id, Username = user.Username, ProfitLoss = user.ProfitLoss });
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new ApiResponse<string> { HasError = false, Data = "Friend request accepted successfully." });
+        }
+
+        // Decline Friend Request
+        [HttpPost("Decline-Request/{userId}/{friendId}")]
+        public async Task<IActionResult> DeclineFriendRequest(int userId, int friendId)
         {
-            HasError = true,
-            ErrorCode = 400,
-            Data = "No pending request found"
-        });
-    }
+            var user = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == userId);
+            var friend = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == friendId);
 
-    // Remove pending requests
-    userFriends.ReceivedRequests.Remove(requestInReceived);
-    friendFriends.SentRequests.Remove(requestInSent);
+            if (user == null || friend == null)
+                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
 
-    // Add to each other's friends list
-    userFriends.FriendsList.Add(new UserObj
-    {
-        Id = friend.Id,
-        Username = friend.Username,
-        ProfitLoss = friend.ProfitLoss
-    });
+            var userFriends = await EnsureFriendsExists(user);
+            var friendFriends = await EnsureFriendsExists(friend);
 
-    friendFriends.FriendsList.Add(new UserObj
-    {
-        Id = user.Id,
-        Username = user.Username,
-        ProfitLoss = user.ProfitLoss
-    });
+            userFriends.ReceivedRequests.RemoveAll(r => r.Id == friendId);
+            friendFriends.SentRequests.RemoveAll(r => r.Id == userId);
 
-    await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-    return Ok(new ApiResponse<string>
-    {
-        Data = "Friend request accepted successfully",
-        HasError = false
-    });
-}
+            return Ok(new ApiResponse<string> { HasError = false, Data = "Friend request declined successfully." });
+        }
 
-[HttpPost("Decline-Request/{userId}/{friendId}")]
-public async Task<IActionResult> DeclineFriendRequest(int userId, int friendId)
-{
-    var user = await _context.Users
-        .Include(u => u.Friends)
-        .FirstOrDefaultAsync(u => u.Id == userId);
-
-    var friend = await _context.Users
-        .Include(u => u.Friends)
-        .FirstOrDefaultAsync(u => u.Id == friendId);
-
-    if (user == null || friend == null)
-    {
-        return NotFound(new ApiResponse<string>
+        // Delete Friend
+        [HttpDelete("Delete-Friend/{userId}/{friendId}")]
+        public async Task<IActionResult> DeleteFriend(int userId, int friendId)
         {
-            Data = "User not found",
-            HasError = true,
-            ErrorCode = 404
-        });
-    }
+            var user = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == userId);
+            var friend = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == friendId);
 
-    // Ensure Friends objects exist
-    var userFriends = await EnsureFriendsExists(user);
-    var friendFriends = await EnsureFriendsExists(friend);
+            if (user == null || friend == null)
+                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
 
-    // Remove pending requests safely
-    userFriends.ReceivedRequests.RemoveAll(r => r.Id == friendId);
-    friendFriends.SentRequests.RemoveAll(r => r.Id == userId);
+            var userFriends = await EnsureFriendsExists(user);
+            var friendFriends = await EnsureFriendsExists(friend);
 
-    await _context.SaveChangesAsync();
+            var removedFromUser = userFriends.FriendsList.RemoveAll(f => f.Id == friendId);
+            var removedFromFriend = friendFriends.FriendsList.RemoveAll(f => f.Id == userId);
 
-    return Ok(new ApiResponse<string>
-    {
-        Data = "Friend request declined successfully.",
-        HasError = false
-    });
-}
+            if (removedFromUser == 0 && removedFromFriend == 0)
+                return BadRequest(new ApiResponse<string> { HasError = true, ErrorCode = 400, Data = "They are not friends." });
 
-[HttpDelete("Delete-Friend/{userId}/{friendId}")]
-public async Task<IActionResult> DeleteFriend(int userId, int friendId)
-{
-    // Load both users with their Friends objects
-    var user = await _context.Users
-        .Include(u => u.Friends)
-        .FirstOrDefaultAsync(u => u.Id == userId);
+            await _context.SaveChangesAsync();
 
-    var friend = await _context.Users
-        .Include(u => u.Friends)
-        .FirstOrDefaultAsync(u => u.Id == friendId);
+            return Ok(new ApiResponse<string> { HasError = false, Data = "Friend deleted successfully." });
+        }
 
-    if (user == null || friend == null)
-    {
-        return NotFound(new ApiResponse<string>
+        // Get Friends List
+        [HttpGet("Get-Friends/{userId}")]
+        public async Task<IActionResult> GetFriends(int userId)
         {
-            Data = "User not found.",
-            HasError = true,
-            ErrorCode = 404
-        });
-    }
+            var user = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == userId);
 
-    // Ensure Friends objects exist
-    var userFriends = await EnsureFriendsExists(user);
-    var friendFriends = await EnsureFriendsExists(friend);
+            if (user == null)
+                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
 
-    // Remove each other from friends lists
-    var removedFromUser = userFriends.FriendsList.RemoveAll(f => f.Id == friendId);
-    var removedFromFriend = friendFriends.FriendsList.RemoveAll(f => f.Id == userId);
+            var userFriends = await EnsureFriendsExists(user);
 
-    if (removedFromUser == 0 && removedFromFriend == 0)
-    {
-        return BadRequest(new ApiResponse<string>
+            // Update profit/loss
+            var friendIds = userFriends.FriendsList.Select(f => f.Id).ToList();
+            var dbFriends = await _context.Users.Where(u => friendIds.Contains(u.Id)).ToListAsync();
+
+            foreach (var f in userFriends.FriendsList)
+            {
+                var dbFriend = dbFriends.FirstOrDefault(x => x.Id == f.Id);
+                if (dbFriend != null)
+                    f.ProfitLoss = dbFriend.ProfitLoss;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new ApiResponse<List<UserObj>> { HasError = false, Data = userFriends.FriendsList });
+        }
+
+        // Get Sent Requests
+        [HttpGet("Get-Sent-Request/{userId}")]
+        public async Task<IActionResult> GetSentRequests(int userId)
         {
-            Data = "They are not friends.",
-            HasError = true,
-            ErrorCode = 400
-        });
-    }
+            var user = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == userId);
 
-    await _context.SaveChangesAsync();
+            if (user == null)
+                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
 
-    return Ok(new ApiResponse<string>
-    {
-        Data = "Friend deleted successfully.",
-        HasError = false
-    });
-}
+            var userFriends = await EnsureFriendsExists(user);
+
+            return Ok(new ApiResponse<List<UserObj>> { HasError = false, Data = userFriends.SentRequests });
+        }
+
+        // Get Received Requests
+        [HttpGet("Get-Received-Request/{userId}")]
+        public async Task<IActionResult> GetReceivedRequests(int userId)
+        {
+            var user = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
+
+            var userFriends = await EnsureFriendsExists(user);
+
+            return Ok(new ApiResponse<List<UserObj>> { HasError = false, Data = userFriends.ReceivedRequests });
+        }
+
+        // ===================== HELPER ===================== //
+        private Task<Friends> EnsureFriendsExists(User user)
+        {
+            if (user.Friends == null)
+            {
+                user.Friends = new Friends
+                {
+                    FriendsList = new List<UserObj>(),
+                    SentRequests = new List<UserObj>(),
+                    ReceivedRequests = new List<UserObj>()
+                };
+            }
+
+            return Task.FromResult(user.Friends);
+        }
 
     
 
@@ -548,6 +339,7 @@ public async Task<IActionResult> DeleteFriend(int userId, int friendId)
 
 }
 }
+
 
 
 
