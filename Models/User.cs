@@ -25,8 +25,13 @@ namespace TradingSimulator_Backend.Models
 
         public Portfolio Portfolio { get; set; } = null!;
 
+        [NotMapped]
         public ICollection<UserFriend> FriendsList { get; set; } = new List<UserFriend>();
+        
+        [NotMapped]
         public ICollection<UserSentRequest> SentRequests { get; set; } = new List<UserSentRequest>();
+        
+        [NotMapped]
         public ICollection<UserReceivedRequest> ReceivedRequests { get; set; } = new List<UserReceivedRequest>();
     }
 
@@ -75,3 +80,4 @@ namespace TradingSimulator_Backend.Models
         public float ProfitLoss { get; set; }
     }
 }
+
