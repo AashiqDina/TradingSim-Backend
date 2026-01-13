@@ -25,15 +25,17 @@ namespace TradingSimulator_Backend.Data
             {
                 u.OwnsOne(u => u.Friends, f =>
                 {
-                    f.OwnsMany(x => x.FriendsList);
-                    f.OwnsMany(x => x.SentRequests);
-                    f.OwnsMany(x => x.ReceivedRequests);
+                    f.ToTable("friends");
+                    f.WithOwner();
+                    f.OwnsMany(x => x.FriendsList, fl => fl.ToTable("users_FriendsList"));
+                    f.OwnsMany(x => x.SentRequests, sr => sr.ToTable("users_SentRequests"));
+                    f.OwnsMany(x => x.ReceivedRequests, rr => rr.ToTable("users_ReceivedRequests"));
                 });
             });
 
             modelBuilder.Entity<Portfolio>()
                 .HasOne(p => p.User)
-                .WithOne()
+                .WithOne(u => u.Portfolio)
                 .HasForeignKey<Portfolio>(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -167,6 +169,7 @@ namespace TradingSimulator_Backend.Data
 //         // }
 //     }
 // }
+
 
 
 
