@@ -34,6 +34,4 @@ namespace TradingSimulator_Backend.Models
         [NotMapped]
         public ICollection<UserReceivedRequest> ReceivedRequests { get; set; } = new List<UserReceivedRequest>();
     }
-
 }
-
