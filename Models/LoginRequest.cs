@@ -1,4 +1,4 @@
-namespace TradingSim-Backend.Models
+namespace TradingSimulator_Backend.Models
 {
     public class LoginRequest
     {
@@ -7,3 +7,4 @@ namespace TradingSim-Backend.Models
     }
 
 }
+
