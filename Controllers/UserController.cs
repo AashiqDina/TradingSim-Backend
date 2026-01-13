@@ -18,11 +18,11 @@ namespace TradingSimulator_Backend.Controllers
 
         // ------------------ BASIC USER OPERATIONS ------------------ //
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
-        {
-            return await _context.Users.ToListAsync();
-        }
+        // [HttpGet]
+        // public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        // {
+        //     return await _context.Users.ToListAsync();
+        // }
 
         [HttpGet("List")]
         public async Task<ActionResult<IEnumerable<UserObj>>> GetUsersList()
@@ -299,5 +299,6 @@ public async Task<IActionResult> GetReceivedRequests(long userId)
 }
     }
 }
+
 
 
