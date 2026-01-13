@@ -25,59 +25,59 @@ namespace TradingSimulator_Backend.Models
 
         public Portfolio Portfolio { get; set; } = null!;
 
+        // These are loaded manually — not mapped to EF relationships
         [NotMapped]
         public ICollection<UserFriend> FriendsList { get; set; } = new List<UserFriend>();
-        
+
         [NotMapped]
         public ICollection<UserSentRequest> SentRequests { get; set; } = new List<UserSentRequest>();
-        
+
         [NotMapped]
         public ICollection<UserReceivedRequest> ReceivedRequests { get; set; } = new List<UserReceivedRequest>();
     }
 
     public class UserFriend
     {
-        [Column("id")]
+        [Column("Id")]
         public long Id { get; set; }
 
-        [Column("friendsuserid")]
+        [Column("FriendsUserId")]
         public long FriendsUserId { get; set; }
 
-        [Column("username")]
+        [Column("Username")]
         public string Username { get; set; } = string.Empty;
 
-        [Column("profitloss")]
+        [Column("ProfitLoss")]
         public float ProfitLoss { get; set; }
     }
 
     public class UserSentRequest
     {
-        [Column("id")]
+        [Column("Id")]
         public long Id { get; set; }
 
-        [Column("friendsuserid")]
+        [Column("FriendsUserId")]
         public long FriendsUserId { get; set; }
 
-        [Column("username")]
+        [Column("Username")]
         public string Username { get; set; } = string.Empty;
 
-        [Column("profitloss")]
+        [Column("ProfitLoss")]
         public float ProfitLoss { get; set; }
     }
 
     public class UserReceivedRequest
     {
-        [Column("id")]
+        [Column("Id")]
         public long Id { get; set; }
 
-        [Column("friendsuserid")]
+        [Column("FriendsUserId")]
         public long FriendsUserId { get; set; }
 
-        [Column("username")]
+        [Column("Username")]
         public string Username { get; set; } = string.Empty;
 
-        [Column("profitloss")]
+        [Column("ProfitLoss")]
         public float ProfitLoss { get; set; }
     }
 }
-
