@@ -1,7 +1,8 @@
-namespace TradingSimulator_Backend.Models
+namespace TradingSim-Backend.Models
 {
     public class UsernameCheckRequest
     {
         public string Username { get; set; }
     }
+
 }
