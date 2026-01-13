@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
-using TradingSim-Backend.Models;
+using TradingSimulator_Backend.Models;
 
 public class StockHistory
     {
@@ -25,5 +25,6 @@ public class StockHistory
         [Column("quantity")]
         public decimal Quantity { get; set; }
     }
+
 
 
