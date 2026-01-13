@@ -3,10 +3,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TradingSimulator_Backend.Models
 {
-    public class User
+     public class User
     {
         [Column("id")]
-        public long Id { get; set; } 
+        public long Id { get; set; }
 
         [Column("username")]
         public required string Username { get; set; }
@@ -15,27 +15,19 @@ namespace TradingSimulator_Backend.Models
         public required string Password { get; set; }
 
         [Column("investedamount")]
-        public float InvestedAmount { get; set; } 
+        public decimal InvestedAmount { get; set; }
 
         [Column("currentvalue")]
-        public float CurrentValue { get; set; }
+        public decimal CurrentValue { get; set; }
 
         [Column("profitloss")]
-        public float ProfitLoss { get; set; }
+        public decimal ProfitLoss { get; set; }
 
-        // --- Navigation properties ---
+        public Portfolio Portfolio { get; set; } = null!;
 
-        // Portfolio (1:1)
-        public Portfolio? Portfolio { get; set; }
-
-        // Friends (1:M)
         public ICollection<UserFriend> FriendsList { get; set; } = new List<UserFriend>();
-
-        // Sent requests
-        public ICollection<UserSentRequest> SentRequests { get; set; } = new List<UserSentRequest>();
-
-        // Received requests
-        public ICollection<UserReceivedRequest> ReceivedRequests { get; set; } = new List<UserReceivedRequest>();
+        public ICollection<UserFriend> ReceivedRequests { get; set; } = new List<UserFriend>();
+        public ICollection<UserFriend> SentRequests { get; set; } = new List<UserFriend>();
     }
 
     public class UserFriend
@@ -80,3 +72,4 @@ namespace TradingSimulator_Backend.Models
         public float ProfitLoss { get; set; }
     }
 }
+
