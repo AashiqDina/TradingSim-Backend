@@ -1,4 +1,4 @@
-namespace TradingSimulator_Backend.Models{
+namespace TradingSim-Backend.Models{
     using Newtonsoft.Json;
     using System;
 
@@ -8,4 +8,5 @@ namespace TradingSimulator_Backend.Models{
         [JsonProperty("price")]
         public decimal? Price { get; set; }
     }
+
 }
