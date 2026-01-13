@@ -1,4 +1,4 @@
-using TradingSim-Backend.Models; 
+using TradingSimulator_Backend.Models; 
 
 public class StockFullHistoryPoint
 {
@@ -10,3 +10,4 @@ public class StockFullHistoryPoint
     public long Volume { get; set; }
 
 }
+
