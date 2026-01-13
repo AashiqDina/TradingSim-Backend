@@ -15,17 +15,17 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowGitHubPages", policy =>
     {
-        // policy.WithOrigins("https://aashiqdina.github.io")
-        //       .AllowAnyHeader()
-        //       .AllowAnyMethod()
-        //       .AllowCredentials();
-        policy.WithOrigins(
-            "https://aashiqdina.github.io",
-            "http://localhost:5048"
-        )
+        policy.WithOrigins("https://aashiqdina.github.io")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
+        // policy.WithOrigins(
+        //     "https://aashiqdina.github.io",
+        //     "http://localhost:5048"
+        // )
+        //       .AllowAnyHeader()
+        //       .AllowAnyMethod()
+        //       .AllowCredentials();
     });
 });
 
@@ -70,4 +70,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
 
