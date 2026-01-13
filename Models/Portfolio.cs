@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
 using System.Linq;
-using TradingSimulator_Backend.Models;
+using TradingSimulator_Backend.Models
 
-namespace TradingSim-Backend.Models
+namespace TradingSimulator_Backend.Models
 {
     public class Portfolio
     {
@@ -28,5 +28,6 @@ namespace TradingSim-Backend.Models
         public decimal ProfitLoss => CurrentValue - TotalInvested;
     }
 }
+
 
 
