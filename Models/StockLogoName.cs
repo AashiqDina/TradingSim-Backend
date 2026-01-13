@@ -1,4 +1,4 @@
-namespace TradingSimulator_Backend.Models
+namespace TradingSim-Backend.Models
 {
     public class StockLogoName
     {
@@ -8,3 +8,4 @@ namespace TradingSimulator_Backend.Models
 
     }
 }
+
