@@ -227,44 +227,6 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(new ApiResponse<string> { HasError = false, Data = "Friend request accepted successfully." });
         }
 
-        [HttpPost("Accept-Request/{userId}/{friendId}")]
-        public async Task<IActionResult> AcceptFriendRequest(long userId, long friendId)
-        {
-            var user = await LoadUserWithRelations(userId);
-            var friend = await LoadUserWithRelations(friendId);
-        
-            if (user == null || friend == null)
-                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
-        
-            var received = user.ReceivedRequests.FirstOrDefault(r => r.FriendsUserId == friendId);
-            var sent = friend.SentRequests.FirstOrDefault(r => r.FriendsUserId == userId);
-        
-            if (received == null || sent == null)
-                return BadRequest(new ApiResponse<string> { HasError = true, ErrorCode = 400, Data = "No pending request found." });
-        
-            _context.UsersReceivedRequests.Remove(received);
-            _context.UsersSentRequests.Remove(sent);
-        
-            _context.UsersFriendsList.Add(new UserFriend
-            {
-                UserId = user.Id,
-                FriendsUserId = friend.Id,
-                Username = friend.Username,
-                ProfitLoss = friend.ProfitLoss
-            });
-        
-            _context.UsersFriendsList.Add(new UserFriend
-            {
-                UserId = friend.Id,
-                FriendsUserId = user.Id,
-                Username = user.Username,
-                ProfitLoss = user.ProfitLoss
-            });
-        
-            await _context.SaveChangesAsync();
-            return Ok(new ApiResponse<string> { HasError = false, Data = "Friend request accepted successfully." });
-        }
-
         [HttpPost("Decline-Request/{userId}/{friendId}")]
         public async Task<IActionResult> DeclineFriendRequest(long userId, long friendId)
         {
@@ -333,6 +295,7 @@ namespace TradingSimulator_Backend.Controllers
         
     }
 }
+
 
 
 
