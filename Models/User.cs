@@ -3,55 +3,75 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TradingSimulator_Backend.Models
 {
-     public class User
-     {
-         public long Id { get; set; }
-     
-         public string Username { get; set; } = null!;
-         public string Password { get; set; } = null!;
-     
-         public float InvestedAmount { get; set; }
-         public float CurrentValue { get; set; }
-         public float ProfitLoss { get; set; }
-     
-         public Portfolio Portfolio { get; set; } = null!;
-     
-         public ICollection<UserFriend> FriendsList { get; set; } = new List<UserFriend>();
-         public ICollection<UserSentRequest> SentRequests { get; set; } = new List<UserSentRequest>();
-         public ICollection<UserReceivedRequest> ReceivedRequests { get; set; } = new List<UserReceivedRequest>();
-     }
+    public class User
+    {
+        [Column("id")]
+        public long Id { get; set; }
 
-     public class UserFriend
-     {
-         public long Id { get; set; }
-         public long FriendsUserId { get; set; }
-     
-         public string Username { get; set; } = string.Empty;
-         public float ProfitLoss { get; set; }
-     }
+        [Column("username")]
+        public string Username { get; set; } = null!;
 
-     public class UserSentRequest
-     {
-         public long Id { get; set; }
-         public long FriendsUserId { get; set; }
-     
-         public string Username { get; set; } = string.Empty;
-         public float ProfitLoss { get; set; }
-     }
+        [Column("password")]
+        public string Password { get; set; } = null!;
 
-     public class UserReceivedRequest
-     {
-         public long Id { get; set; }
-         public long FriendsUserId { get; set; }
-     
-         public string Username { get; set; } = string.Empty;
-         public float ProfitLoss { get; set; }
-     }
+        [Column("investedamount")]
+        public float InvestedAmount { get; set; }
+
+        [Column("currentvalue")]
+        public float CurrentValue { get; set; }
+
+        [Column("profitloss")]
+        public float ProfitLoss { get; set; }
+
+        public Portfolio Portfolio { get; set; } = null!;
+
+        public ICollection<UserFriend> FriendsList { get; set; } = new List<UserFriend>();
+        public ICollection<UserSentRequest> SentRequests { get; set; } = new List<UserSentRequest>();
+        public ICollection<UserReceivedRequest> ReceivedRequests { get; set; } = new List<UserReceivedRequest>();
+    }
+
+    public class UserFriend
+    {
+        [Column("id")]
+        public long Id { get; set; }
+
+        [Column("friendsuserid")]
+        public long FriendsUserId { get; set; }
+
+        [Column("username")]
+        public string Username { get; set; } = string.Empty;
+
+        [Column("profitloss")]
+        public float ProfitLoss { get; set; }
+    }
+
+    public class UserSentRequest
+    {
+        [Column("id")]
+        public long Id { get; set; }
+
+        [Column("friendsuserid")]
+        public long FriendsUserId { get; set; }
+
+        [Column("username")]
+        public string Username { get; set; } = string.Empty;
+
+        [Column("profitloss")]
+        public float ProfitLoss { get; set; }
+    }
+
+    public class UserReceivedRequest
+    {
+        [Column("id")]
+        public long Id { get; set; }
+
+        [Column("friendsuserid")]
+        public long FriendsUserId { get; set; }
+
+        [Column("username")]
+        public string Username { get; set; } = string.Empty;
+
+        [Column("profitloss")]
+        public float ProfitLoss { get; set; }
+    }
 }
-
-
-
-
-
-
-
