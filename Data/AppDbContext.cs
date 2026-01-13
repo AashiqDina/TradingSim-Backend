@@ -20,29 +20,27 @@ namespace TradingSimulator_Backend.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Table names
+            // ----------------- TABLE NAMES ----------------- //
+
             modelBuilder.Entity<User>().ToTable("users");
-            modelBuilder.Entity<UserFriend>().ToTable("users_FriendsList");
-            modelBuilder.Entity<UserSentRequest>().ToTable("users_SentRequests");
-            modelBuilder.Entity<UserReceivedRequest>().ToTable("users_ReceivedRequests");
+            modelBuilder.Entity<UserFriend>().ToTable("users_friendslist");
+            modelBuilder.Entity<UserSentRequest>().ToTable("users_sentrequests");
+            modelBuilder.Entity<UserReceivedRequest>().ToTable("users_receivedrequests");
             modelBuilder.Entity<Portfolio>().ToTable("portfolios");
             modelBuilder.Entity<Stock>().ToTable("stocks");
             modelBuilder.Entity<StockLogoName>().ToTable("stocklogoname");
             modelBuilder.Entity<StockHistory>().ToTable("stockhistory");
 
             // ----------------- FRIENDS & REQUESTS ----------------- //
+            // These tables DO NOT have relationships in the DB.
+            // They must NOT have navigation properties or FK mappings.
 
-            // UserFriend (composite key)
             modelBuilder.Entity<UserFriend>()
                 .HasKey(f => new { f.FriendsUserId, f.Id });
 
-            // No navigation properties — DB does not define them
-
-            // UserSentRequest (composite key)
             modelBuilder.Entity<UserSentRequest>()
                 .HasKey(s => new { s.FriendsUserId, s.Id });
 
-            // UserReceivedRequest (composite key)
             modelBuilder.Entity<UserReceivedRequest>()
                 .HasKey(r => new { r.FriendsUserId, r.Id });
 
