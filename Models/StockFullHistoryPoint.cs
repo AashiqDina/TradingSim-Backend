@@ -1,4 +1,4 @@
-using TradingSimulator_Backend.Models; 
+using TradingSim-Backend.Models; 
 
 public class StockFullHistoryPoint
 {
@@ -8,4 +8,5 @@ public class StockFullHistoryPoint
     public decimal Low { get; set; }
     public decimal Close { get; set; }
     public long Volume { get; set; }
+
 }
