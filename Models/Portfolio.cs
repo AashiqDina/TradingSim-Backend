@@ -14,7 +14,7 @@ namespace TradingSimulator_Backend.Models
         public long UserId { get; set; }
 
         [ForeignKey("UserId")]
-        public User? User { get; set; }
+        public User User { get; set; } = null!;
 
         public List<Stock> Stocks { get; set; } = new List<Stock>();
 
@@ -28,3 +28,4 @@ namespace TradingSimulator_Backend.Models
         public decimal ProfitLoss => CurrentValue - TotalInvested;
     }
 }
+
