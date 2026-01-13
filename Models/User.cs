@@ -25,7 +25,6 @@ namespace TradingSimulator_Backend.Models
 
         public Portfolio Portfolio { get; set; } = null!;
 
-        // These are loaded manually — not mapped to EF relationships
         [NotMapped]
         public ICollection<UserFriend> FriendsList { get; set; } = new List<UserFriend>();
 
@@ -36,48 +35,5 @@ namespace TradingSimulator_Backend.Models
         public ICollection<UserReceivedRequest> ReceivedRequests { get; set; } = new List<UserReceivedRequest>();
     }
 
-    public class UserFriend
-    {
-        [Column("Id")]
-        public long Id { get; set; }
-
-        [Column("FriendsUserId")]
-        public long FriendsUserId { get; set; }
-
-        [Column("Username")]
-        public string Username { get; set; } = string.Empty;
-
-        [Column("ProfitLoss")]
-        public float ProfitLoss { get; set; }
-    }
-
-    public class UserSentRequest
-    {
-        [Column("Id")]
-        public long Id { get; set; }
-
-        [Column("FriendsUserId")]
-        public long FriendsUserId { get; set; }
-
-        [Column("Username")]
-        public string Username { get; set; } = string.Empty;
-
-        [Column("ProfitLoss")]
-        public float ProfitLoss { get; set; }
-    }
-
-    public class UserReceivedRequest
-    {
-        [Column("Id")]
-        public long Id { get; set; }
-
-        [Column("FriendsUserId")]
-        public long FriendsUserId { get; set; }
-
-        [Column("Username")]
-        public string Username { get; set; } = string.Empty;
-
-        [Column("ProfitLoss")]
-        public float ProfitLoss { get; set; }
-    }
 }
+
