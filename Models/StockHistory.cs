@@ -1,11 +1,21 @@
 public class StockHistory
-{
-    public int Id { get; set; }
-    public long StockId { get; set; }
-    public DateTime Timestamp { get; set; }
-    public decimal Price { get; set; }
-    public decimal Quantity { get; set; }
-    public decimal TotalValue => Price * Quantity;
+    {
+        [Column("id")]
+        public long Id { get; set; }
 
-    public Stock Stock { get; set; }
-}
+        [Column("stockId")]
+        public long StockId { get; set; }
+
+        [ForeignKey("StockId")]
+        [System.Text.Json.Serialization.JsonIgnore]
+        public Stock Stock { get; set; } = null!;
+
+        [Column("timestamp")]
+        public DateTime Timestamp { get; set; }
+
+        [Column("price")]
+        public decimal Price { get; set; }
+
+        [Column("quantity")]
+        public decimal Quantity { get; set; }
+    }
