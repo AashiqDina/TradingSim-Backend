@@ -265,13 +265,48 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(new ApiResponse<string> { HasError = false, Data = "Friend deleted successfully." });
         }
 
+        // [HttpGet("Get-Friends/{userId}")]
+        // public async Task<IActionResult> GetFriends(long userId)
+        // {
+        //     var user = await LoadUserWithRelations(userId);
+        //     if (user == null) return NotFound();
+
+            
+        
+        //     return Ok(new ApiResponse<List<UserFriend>> { HasError = false, Data = user.FriendsList.ToList() });
+        // }
+
         [HttpGet("Get-Friends/{userId}")]
         public async Task<IActionResult> GetFriends(long userId)
         {
             var user = await LoadUserWithRelations(userId);
-            if (user == null) return NotFound();
+            if (user == null) 
+                return NotFound();
         
-            return Ok(new ApiResponse<List<UserFriend>> { HasError = false, Data = user.FriendsList.ToList() });
+            foreach (var friendEntry in user.FriendsList)
+            {
+                var friendUser = await _context.Users
+                    .Include(u => u.Portfolios)
+                        .ThenInclude(p => p.Stocks)
+                    .FirstOrDefaultAsync(u => u.Id == friendEntry.FriendsUserId);
+        
+                if (friendUser != null)
+                {
+                    var portfolio = friendUser.Portfolios.FirstOrDefault();
+                    if (portfolio != null)
+                    {
+                        friendEntry.ProfitLoss = portfolio.ProfitLoss;
+                    }
+                }
+            }
+        
+            await _context.SaveChangesAsync();
+        
+            return Ok(new ApiResponse<List<UserFriend>> 
+            { 
+                HasError = false, 
+                Data = user.FriendsList.ToList() 
+            });
         }
         
         [HttpGet("Get-Sent-Request/{userId}")]
@@ -295,6 +330,7 @@ namespace TradingSimulator_Backend.Controllers
         
     }
 }
+
 
 
 
