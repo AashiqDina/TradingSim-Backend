@@ -280,32 +280,34 @@ namespace TradingSimulator_Backend.Controllers
         public async Task<IActionResult> GetFriends(long userId)
         {
             var user = await LoadUserWithRelations(userId);
-            if (user == null) 
+            if (user == null)
                 return NotFound();
+        
+            var friendIds = user.FriendsList.Select(f => f.FriendsUserId).ToList();
+        
+            // Load each friend + their single portfolio + stocks
+            var friends = await _context.Users
+                .Where(u => friendIds.Contains(u.Id))
+                .Include(u => u.Portfolio)
+                    .ThenInclude(p => p.Stocks)
+                .ToListAsync();
         
             foreach (var friendEntry in user.FriendsList)
             {
-                var friendUser = await _context.Users
-                    .Include(u => u.Portfolios)
-                        .ThenInclude(p => p.Stocks)
-                    .FirstOrDefaultAsync(u => u.Id == friendEntry.FriendsUserId);
+                var friendUser = friends.FirstOrDefault(f => f.Id == friendEntry.FriendsUserId);
         
-                if (friendUser != null)
+                if (friendUser?.Portfolio != null)
                 {
-                    var portfolio = friendUser.Portfolios.FirstOrDefault();
-                    if (portfolio != null)
-                    {
-                        friendEntry.ProfitLoss = portfolio.ProfitLoss;
-                    }
+                    friendEntry.ProfitLoss = friendUser.Portfolio.ProfitLoss;
                 }
             }
         
             await _context.SaveChangesAsync();
         
-            return Ok(new ApiResponse<List<UserFriend>> 
-            { 
-                HasError = false, 
-                Data = user.FriendsList.ToList() 
+            return Ok(new ApiResponse<List<UserFriend>>
+            {
+                HasError = false,
+                Data = user.FriendsList.ToList()
             });
         }
         
@@ -330,6 +332,7 @@ namespace TradingSimulator_Backend.Controllers
         
     }
 }
+
 
 
 
