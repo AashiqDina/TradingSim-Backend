@@ -298,7 +298,7 @@ namespace TradingSimulator_Backend.Controllers
         
                 if (friendUser?.Portfolio != null)
                 {
-                    friendEntry.ProfitLoss = friendUser.Portfolio.ProfitLoss;
+                    friendEntry.ProfitLoss = (float)friendUser.Portfolio.ProfitLoss;
                 }
             }
         
@@ -332,6 +332,7 @@ namespace TradingSimulator_Backend.Controllers
         
     }
 }
+
 
 
 
