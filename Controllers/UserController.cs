@@ -265,50 +265,15 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(new ApiResponse<string> { HasError = false, Data = "Friend deleted successfully." });
         }
 
-        // [HttpGet("Get-Friends/{userId}")]
-        // public async Task<IActionResult> GetFriends(long userId)
-        // {
-        //     var user = await LoadUserWithRelations(userId);
-        //     if (user == null) return NotFound();
-
-            
-        
-        //     return Ok(new ApiResponse<List<UserFriend>> { HasError = false, Data = user.FriendsList.ToList() });
-        // }
-
         [HttpGet("Get-Friends/{userId}")]
         public async Task<IActionResult> GetFriends(long userId)
         {
             var user = await LoadUserWithRelations(userId);
-            if (user == null)
-                return NotFound();
+            if (user == null) return NotFound();
+
+            
         
-            var friendIds = user.FriendsList.Select(f => f.FriendsUserId).ToList();
-        
-            // Load each friend + their single portfolio + stocks
-            var friends = await _context.Users
-                .Where(u => friendIds.Contains(u.Id))
-                .Include(u => u.Portfolio)
-                    .ThenInclude(p => p.Stocks)
-                .ToListAsync();
-        
-            foreach (var friendEntry in user.FriendsList)
-            {
-                var friendUser = friends.FirstOrDefault(f => f.Id == friendEntry.FriendsUserId);
-        
-                if (friendUser?.Portfolio != null)
-                {
-                    friendEntry.ProfitLoss = (float)friendUser.Portfolio.ProfitLoss;
-                }
-            }
-        
-            await _context.SaveChangesAsync();
-        
-            return Ok(new ApiResponse<List<UserFriend>>
-            {
-                HasError = false,
-                Data = user.FriendsList.ToList()
-            });
+            return Ok(new ApiResponse<List<UserFriend>> { HasError = false, Data = user.FriendsList.ToList() });
         }
         
         [HttpGet("Get-Sent-Request/{userId}")]
@@ -332,6 +297,7 @@ namespace TradingSimulator_Backend.Controllers
         
     }
 }
+
 
 
 
