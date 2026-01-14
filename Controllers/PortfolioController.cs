@@ -247,12 +247,11 @@ public class PortfolioController : ControllerBase
             }
         }
     
-        // Update user totals AFTER stock prices are updated
         if (portfolio.User != null)
         {
-            portfolio.User.InvestedAmount = portfolio.TotalInvested;
-            portfolio.User.CurrentValue = portfolio.CurrentValue;
-            portfolio.User.ProfitLoss = portfolio.ProfitLoss;
+            portfolio.User.InvestedAmount = (float)portfolio.TotalInvested;
+            portfolio.User.CurrentValue = (float)portfolio.CurrentValue;
+            portfolio.User.ProfitLoss = (float)portfolio.ProfitLoss;
         }
     
         await _context.SaveChangesAsync();
@@ -386,6 +385,7 @@ public class PortfolioController : ControllerBase
 
 
 }
+
 
 
 
