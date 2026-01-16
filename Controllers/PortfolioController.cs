@@ -34,7 +34,7 @@ public class PortfolioController : ControllerBase
             return NotFound("Portfolio not found.");
         }
 
-        var safePortfolio = new {portfolio.Id, portfolio.UserId, portfolio.Stocks, portfolio.TotalInvested, portfolio.CurrentValue, portfolio.ProfitLoss}
+        var safePortfolio = new {portfolio.Id, portfolio.UserId, portfolio.Stocks, portfolio.TotalInvested, portfolio.CurrentValue, portfolio.ProfitLoss};
 
         return Ok(safePortfolio);
     }
@@ -385,6 +385,7 @@ public class PortfolioController : ControllerBase
 
 
 }
+
 
 
 
