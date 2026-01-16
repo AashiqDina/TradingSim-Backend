@@ -59,24 +59,32 @@ namespace TradingSimulator_Backend.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> RegisterUser([FromBody] User user)
+        public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
         {
-            if (await _context.Users.AnyAsync(u => u.Username == user.Username))
+            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
                 return BadRequest(new { success = false, message = "Username already taken." });
-
+        
+            var user = new User
+            {
+                Username = request.Username,
+                Password = request.Password
+            };
+        
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-
-            var portfolio = new Portfolio
+        
+            user.Portfolio = new Portfolio
             {
-                UserId = user.Id,
                 Stocks = new List<Stock>()
             };
-            _context.Portfolios.Add(portfolio);
+        
             await _context.SaveChangesAsync();
-
-            return Ok(new { success = true, message = "User registered successfully and portfolio created." });
+        
+            return Ok(new { success = true });
         }
+
+
+        
 
         [HttpPost("checkUsername")]
         public async Task<IActionResult> CheckUsername([FromBody] UsernameCheckRequest request)
@@ -297,6 +305,7 @@ namespace TradingSimulator_Backend.Controllers
         
     }
 }
+
 
 
 
