@@ -66,10 +66,11 @@ if (app.Environment.IsDevelopment())
 app.UseRouting();
 app.UseCors("AllowGitHubPages");
 // app.UseSession();
-app.UseAuthorization();
+// app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
 
 
 
