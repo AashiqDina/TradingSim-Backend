@@ -119,22 +119,22 @@ namespace TradingSimulator_Backend.Controllers
         }
 
 
-        [HttpPost("logout")]
-        public IActionResult Logout()
-        {
-            HttpContext.Session.Clear();
-            return Ok(new { message = "Logged out successfully" });
-        }
+        // [HttpPost("logout")]
+        // public IActionResult Logout()
+        // {
+        //     HttpContext.Session.Clear();
+        //     return Ok(new { message = "Logged out successfully" });
+        // }
 
-        [HttpGet("profile")]
-        public IActionResult GetProfile()
-        {
-            var username = HttpContext.Session.GetString("Username");
-            if (string.IsNullOrEmpty(username))
-                return Unauthorized(new { message = "Not logged in" });
+        // [HttpGet("profile")]
+        // public IActionResult GetProfile()
+        // {
+        //     var username = HttpContext.Session.GetString("Username");
+        //     if (string.IsNullOrEmpty(username))
+        //         return Unauthorized(new { message = "Not logged in" });
 
-            return Ok(new { username });
-        }
+        //     return Ok(new { username });
+        // }
 
         private async Task<User?> LoadUserWithRelations(long userId)
         {
@@ -305,6 +305,7 @@ namespace TradingSimulator_Backend.Controllers
         
     }
 }
+
 
 
 
