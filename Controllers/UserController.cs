@@ -24,6 +24,12 @@ namespace TradingSimulator_Backend.Controllers
         //     return await _context.Users.ToListAsync();
         // }
 
+        [HttpGet("ping")]
+        public ActionResult<bool> Ping()
+        {
+            return true;
+        }
+
         [HttpGet("List")]
         public async Task<ActionResult<IEnumerable<UserObj>>> GetUsersList()
         {
