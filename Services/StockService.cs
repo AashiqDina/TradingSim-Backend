@@ -1,3 +1,6 @@
+// TwelveData is changing the way their API is returning ERRORs on May 16 
+// - meaning it will eventually need to be re-written
+
 namespace TradingSimulator_Backend.Services
 {
     using Newtonsoft.Json;
@@ -37,18 +40,17 @@ namespace TradingSimulator_Backend.Services
 
         public async Task<bool> DeleteStockLogo(string symbol)
         {
-            // Remove from cache (safe even if key doesn't exist)
+            // Remove from cache - dont want to send old data
             _stockImageCache.Remove(symbol, out _);
         
-            // Find DB record
+            // get record
             var dbStock = await _context.StockLogoName.FindAsync(symbol);
         
-            if (dbStock is null)
-            {
+            if (dbStock is null){
                 return false;
             }
         
-            // Remove from DB
+            // Remove
             _context.StockLogoName.Remove(dbStock);
             await _context.SaveChangesAsync();
         
