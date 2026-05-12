@@ -32,8 +32,6 @@ namespace TradingSimulator_Backend.Data
             modelBuilder.Entity<StockHistory>().ToTable("stockhistory");
 
             // ----------------- FRIENDS & REQUESTS ----------------- //
-            // Composite keys now match your updated schema:
-            // PRIMARY KEY (UserId, FriendsUserId)
 
             modelBuilder.Entity<UserFriend>()
                 .HasKey(f => new { f.UserId, f.FriendsUserId });
