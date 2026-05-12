@@ -1,5 +1,6 @@
 // TwelveData is changing the way their API is returning ERRORs on May 16 
 // - meaning it will eventually need to be re-written
+// errors will not be wrapped in an OK 200 response
 
 namespace TradingSimulator_Backend.Services
 {
