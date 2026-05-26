@@ -20,7 +20,7 @@ namespace TradingSimulator_Backend.Services
     {
         private readonly HttpClient _httpClient;
         private readonly AppDbContext _context;
-        private readonly string _apiKey = "ea17f13a4e49479d81f08738e4434d89";
+        private readonly string _apiKey = Environment.GetEnvironmentVariable("STOCK_API_KEY");
 
         // cache
         private static ConcurrentDictionary<string, CacheEntry<decimal?>> _stockCache = new ConcurrentDictionary<string, CacheEntry<decimal?>>();
@@ -64,27 +64,34 @@ namespace TradingSimulator_Backend.Services
         // Get the Stock Price of multiple stocks
         public async Task<Dictionary<string, ApiResponse<decimal?>>> GetMultipleStockPricesAsync(List<string> symbols){
 
+            var results = new ConcurrentDictionary<string, ApiResponse<decimal?>>();
+
             var tasks = symbols.Select(async symbol => {
+
                 if (_stockCache.TryGetValue(symbol, out var entry) && DateTime.UtcNow - entry.Timestamp < TimeSpan.FromMinutes(480)){
-                    return (symbol, ApiResponse<decimal?>.Success(entry.Value));
+                    results[symbol] = ApiResponse<decimal?>.Success(entry.Value);
+                    return;
                 }
 
                 var response = await FetchStockPriceFromApi(symbol);
+                results[symbol] = response;
 
                 if (!response.HasError && response.Data != null){
-
-                    _stockCache[symbol] = new CacheEntry<decimal?>{
-                        Value = response.Data,
-                        Timestamp = DateTime.UtcNow
-                    };
+                    _stockCache.AddOrUpdate(
+                        symbol, _ => new CacheEntry<decimal?>{
+                            Value = response.Data,
+                            Timestamp = DateTime.UtcNow
+                        },
+                        (_, _) => new CacheEntry<decimal?>{
+                            Value = response.Data,
+                            Timestamp = DateTime.UtcNow
+                        }
+                    );
                 }
-
-                return (symbol, response);
             });
 
-            var results = await Task.WhenAll(tasks);
-
-            return results.ToDictionary(x => x.symbol, x => x.Item2);
+            await Task.WhenAll(tasks);
+            return results.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         // Get the Last updated time of the stock price
