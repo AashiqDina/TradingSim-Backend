@@ -125,13 +125,9 @@ namespace TradingSimulator_Backend.Controllers
         }
 
         [HttpGet("GetStockLastUpdated/{*symbol}")]
-        public IActionResult GetAllStockLastUpdated(string symbol){
+        public IActionResult GetStockLastUpdated(string symbol){
 
-            DateTime? data = _stockService.GetStockLastUpdated(symbol);
-
-            if(data == null){
-                Console.WriteLine("No data available");
-            }
+            ApiResponse<DateTime> data = _stockService.GetStockLastUpdated(symbol);
 
             return Ok(new {
                 data

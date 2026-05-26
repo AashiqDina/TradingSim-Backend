@@ -13,20 +13,25 @@ namespace TradingSimulator_Backend.Services
     using TradingSimulator_Backend.Models;
     using TradingSimulator_Backend.Data;
     using System.Collections.Concurrent;
-
+    using TradingSimulatorBackend.Caching;
+    using System.ComponentModel.DataAnnotations;
 
     public class StockService : IStockService
     {
         private readonly HttpClient _httpClient;
         private readonly AppDbContext _context;
-        private readonly string _apiKey = Environment.GetEnvironmentVariable("STOCK_API_KEY");
+        private readonly string _apiKey = "ea17f13a4e49479d81f08738e4434d89";
+
+        // cache
+        private static ConcurrentDictionary<string, CacheEntry<decimal?>> _stockCache = new ConcurrentDictionary<string, CacheEntry<decimal?>>();
         
-        private static ConcurrentDictionary<string, (decimal? Price, DateTime Timestamp)> _stockCache = new ConcurrentDictionary<string, (decimal? Price, DateTime Timestamp)>();
+        // old
         private static ConcurrentDictionary<string, (string? Logo, string? Name)> _stockImageCache = new ConcurrentDictionary<string, (string? Logo, string? Name)>();
         private static ConcurrentDictionary<string, (StockApiInfo? Info, DateTime Timestamp)> _stockApiInfoCache = new ConcurrentDictionary<string, (StockApiInfo? Info, DateTime Timestamp)>();
         private static ConcurrentDictionary<string, CompanyProfile?> _CompanyDetailsCache = new ConcurrentDictionary<string, CompanyProfile?>();
         private static ConcurrentDictionary<string, (StockFullHistory? History, DateTime Timestamp)> _StockFullHistoryCache = new ConcurrentDictionary<string, (StockFullHistory? History, DateTime Timestamp)>();
         private static (ConcurrentDictionary<string, int> Map, DateTime Timestamp) TrendingMap = (new ConcurrentDictionary<string, int>(), DateTime.UtcNow);
+
         public static string[] TrendingList = new string[] { "AAPL", "MSFT", "GOOG", "AMZN", "TSLA", "NVDA", "META", "NFLX", "AMD", "JPM" };
 
         public StockService(HttpClient httpClient, AppDbContext appDbContext)
@@ -34,6 +39,121 @@ namespace TradingSimulator_Backend.Services
             _httpClient = httpClient;
             _context = appDbContext;
         }
+
+        //  ---------------- public functions ----------------
+
+        // Get Stock Price
+        public async Task<ApiResponse<decimal?>> GetStockPriceAsync(string symbol){
+
+            if (_stockCache.ContainsKey(symbol) && DateTime.Now - _stockCache[symbol].Timestamp < TimeSpan.FromMinutes(480)){
+                return ApiResponse<decimal?>.Success(_stockCache[symbol].Value);
+            }
+
+            var response = await FetchStockPriceFromApi(symbol);
+
+            if(!response.HasError){
+                _stockCache[symbol] = new CacheEntry<decimal?>{
+                    Value = response.Data,
+                    Timestamp = DateTime.Now
+                };
+            }
+
+            return response;
+        }
+
+        // Get the Stock Price of multiple stocks
+        public async Task<Dictionary<string, ApiResponse<decimal?>>> GetMultipleStockPricesAsync(List<string> symbols){
+
+            var tasks = symbols.Select(async symbol => {
+                if (_stockCache.TryGetValue(symbol, out var entry) && DateTime.UtcNow - entry.Timestamp < TimeSpan.FromMinutes(480)){
+                    return (symbol, ApiResponse<decimal?>.Success(entry.Value));
+                }
+
+                var response = await FetchStockPriceFromApi(symbol);
+
+                if (!response.HasError && response.Data != null){
+
+                    _stockCache[symbol] = new CacheEntry<decimal?>{
+                        Value = response.Data,
+                        Timestamp = DateTime.UtcNow
+                    };
+                }
+
+                return (symbol, response);
+            });
+
+            var results = await Task.WhenAll(tasks);
+
+            return results.ToDictionary(x => x.symbol, x => x.Item2);
+        }
+
+        // Get the Last updated time of the stock price
+        public ApiResponse<DateTime> GetStockLastUpdated(string symbol){
+            if (_stockCache.ContainsKey(symbol)){
+                return ApiResponse<DateTime>.Success(_stockCache[symbol].Timestamp);
+            }
+            else{
+                return ApiResponse<DateTime>.Failure(404);
+            }
+        }
+
+
+
+
+        // ---------------- private external api calls ----------------
+
+        private async Task<ApiResponse<decimal?>> FetchStockPriceFromApi(string symbol){
+            var url = $"https://api.twelvedata.com/price?symbol={symbol}&apikey={_apiKey}";
+            string json;
+
+            try{
+                var response = await _httpClient.GetAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                    return ApiResponse<decimal?>.Failure((int)response.StatusCode);
+
+                json = await response.Content.ReadAsStringAsync();
+            }
+            catch (HttpRequestException){
+                return ApiResponse<decimal?>.Failure(-1);
+            }
+
+
+            JObject data;
+            try{
+                data = JObject.Parse(json);
+            }
+            catch (JsonException){
+                return ApiResponse<decimal?>.Failure(-1);
+            }
+
+            if (data["status"]?.ToString() == "error"){
+                int errorCode = data["code"]?.Value<int>() ?? -1;
+                return ApiResponse<decimal?>.Failure(errorCode);
+            }
+
+            if (!decimal.TryParse(data["price"]?.ToString(), out var price)){
+                return ApiResponse<decimal?>.Failure(-3);
+            }
+
+            return ApiResponse<decimal?>.Success(price);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //  old --------------------------------------------------- old
 
         public string[] getTrendingList(){
             return TrendingList;
@@ -121,10 +241,6 @@ namespace TradingSimulator_Backend.Services
             );
         }
 
-        public DateTime GetStockLastUpdated(string symbol){
-            return _stockCache[symbol].Timestamp;
-        }
-
         public DateTime GetStockInfoLastUpdated(string symbol){
             var timestamp = _stockApiInfoCache[symbol].Info.Timestamp;
             DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(timestamp);
@@ -150,56 +266,6 @@ namespace TradingSimulator_Backend.Services
             }
 
             return History;
-        }
-
-        public async Task<ApiResponse<decimal?>> GetStockPriceAsync(string symbol)
-        {
-            if (_stockCache.ContainsKey(symbol) && DateTime.Now - _stockCache[symbol].Timestamp < TimeSpan.FromMinutes(480))
-            {
-                return new ApiResponse<decimal?>{
-                    Data = _stockCache[symbol].Price,
-                    HasError = false,
-                    ErrorCode = null
-                };
-            }
-
-            var response = await FetchStockPriceFromApi(symbol);
-
-            if(!response.HasError){
-                _stockCache[symbol] = (response.Data, DateTime.Now);
-            }
-
-            return response;
-        }
-
-        public async Task<Dictionary<string, ApiResponse<decimal?>>> GetMultipleStockPricesAsync(List<string> symbols)
-        {
-            var stockPrices = new Dictionary<string, ApiResponse<decimal?>>();
-
-            foreach (var symbol in symbols)
-            {
-                if (_stockCache.ContainsKey(symbol) && DateTime.Now - _stockCache[symbol].Timestamp < TimeSpan.FromMinutes(480))
-                {
-                    stockPrices[symbol] = new ApiResponse<decimal?>
-                    {
-                        Data = _stockCache[symbol].Price,
-                        HasError = false,
-                        ErrorCode = null
-                    };
-                }
-                else
-                {
-                    var response = await FetchStockPriceFromApi(symbol);
-                    stockPrices[symbol] = response;
-
-                    if (!response.HasError)
-                    {
-                        _stockCache[symbol] = (response.Data, DateTime.Now);
-                    }
-                }
-            }
-
-            return stockPrices;
         }
 
         public async Task<ApiResponse<string?>> GetStockImage(string symbol)
@@ -407,62 +473,6 @@ namespace TradingSimulator_Backend.Services
 
 
 
-        private async Task<ApiResponse<decimal?>> FetchStockPriceFromApi(string symbol)
-        {
-            var url = $"https://api.twelvedata.com/price?symbol={symbol}&apikey={_apiKey}";
-            var response = await _httpClient.GetAsync(url);
-
-            if (!response.IsSuccessStatusCode){
-                return new ApiResponse<decimal?>{
-                    Data = null,
-                    HasError = true,
-                    ErrorCode = (int)response.StatusCode
-                };
-            }
-
-            var json = await response.Content.ReadAsStringAsync();
-
-            var data = JObject.Parse(json);
-
-            if (data["status"]?.ToString() == "error")
-            {
-                int errorCode = data["code"]?.Value<int>() ?? -1;
-
-                Console.WriteLine($"API error for {symbol}: {json}");
-                return new ApiResponse<decimal?>{
-                    Data = null,
-                    HasError = true,
-                    ErrorCode = errorCode
-                };
-            }
-
-            try
-            {
-                var price = data["price"]?.Value<decimal>() ?? 0;
-                return new ApiResponse<decimal?>{
-                    Data = price,
-                    HasError = false,
-                    ErrorCode = null
-                };
-            }
-            catch (JsonException)
-            {
-                return new ApiResponse<decimal?>{
-                    Data = null,
-                    HasError = true,
-                    ErrorCode = -1
-                };
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Unexpected error fetching stock for {symbol}: {ex.Message}");
-                return new ApiResponse<decimal?>{
-                    Data = null,
-                    HasError = true,
-                    ErrorCode = -2
-                };
-            }
-        }
 
         private async Task<ApiResponse<(string?, string?)?>> FetchLogoAndNameFromApi(string symbol)
         {
