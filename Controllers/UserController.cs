@@ -54,14 +54,32 @@ namespace TradingSimulator_Backend.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(long id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
+            try
+            {
+                var exists = await _context.Users.AnyAsync(u => u.Id == id);
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-            return NoContent();
+                if (!exists)
+                    return NotFound(new { message = "User not found" });
+
+                await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"DELETE FROM users WHERE id = {id}"
+                );
+
+                return Ok(new { message = "User deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("DELETE USER FAILED:");
+                Console.WriteLine(ex.ToString());
+
+                return StatusCode(500, new
+                {
+                    message = "Failed to delete user",
+                    error = ex.Message
+                });
+            }
         }
 
         [HttpPost]
