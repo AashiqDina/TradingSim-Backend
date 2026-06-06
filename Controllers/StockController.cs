@@ -143,9 +143,9 @@ namespace TradingSimulator_Backend.Controllers
                 Console.WriteLine("No data available");
             }
 
-            return Ok(new {
+            return Ok(
                 data
-            });
+            );
         }
 
         [HttpGet("search")]
