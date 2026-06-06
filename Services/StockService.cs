@@ -116,7 +116,7 @@ namespace TradingSimulator_Backend.Services
             if(!result.HasError){
                 _stockApiInfoCache[symbol] = new CacheEntry<StockApiInfo?>{
                     ValueTask = result.Data,
-                    TimestampAttribute = DateTime.Now
+                    Timestamp = DateTime.Now
                 };
             }
 
@@ -318,7 +318,7 @@ namespace TradingSimulator_Backend.Services
         }
 
         public DateTime GetStockInfoLastUpdated(string symbol){
-            var timestamp = _stockApiInfoCache[symbol].Info.Timestamp;
+            var timestamp = _stockApiInfoCache[symbol].Timestamp;
             DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(timestamp);
             DateTime localTime = dateTimeOffset.LocalDateTime;
 
@@ -409,7 +409,7 @@ namespace TradingSimulator_Backend.Services
         {
             if(_stockApiInfoCache.ContainsKey(symbol)){
                 return new ApiResponse<string?>{
-                    Data = _stockApiInfoCache[symbol].Info.Name,
+                    Data = _stockApiInfoCache[symbol].Timestamp,
                     HasError = false,
                     ErrorCode = null
                 };
@@ -440,7 +440,10 @@ namespace TradingSimulator_Backend.Services
 
             if(result.Data != null){
                 Console.WriteLine($"Fetched {symbol} → Name: '{result.Data?.Name}'");
-                _stockApiInfoCache[symbol] = (result.Data, DateTime.Now);
+                _stockApiInfoCache[symbol] = new CacheEntry<StockApiInfo?>{
+                    Value = result.Data,
+                    Timestamp = DateTime.Now
+                };
                 dbStock = await _context.StockLogoName.FindAsync(symbol);
                 if (dbStock == null)
                     {
