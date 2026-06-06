@@ -124,9 +124,9 @@ namespace TradingSimulator_Backend.Services
         }
 
         // Get the Last updated time of the stock info
-        public DateTime GetStockInfoLastUpdated(string symbol){
+        public ApiResponse<DateTime> GetStockInfoLastUpdated(string symbol){
             if (_stockApiInfoCache.ContainsKey(symbol)){
-                return _stockApiInfoCache[symbol].Timestamp;
+                return ApiResponse<DateTime>.Success(_stockApiInfoCache[symbol].Timestamp);
             }
             else{
                 return ApiResponse<DateTime>.Failure(404);
