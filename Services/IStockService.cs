@@ -12,7 +12,7 @@ public interface IStockService
     Task<ApiResponse<string?>?> GetStockImage(string symbol);
     Task<ApiResponse<string?>?> ConvertSymbolToName(string symbol);
     // Task<(DateTime? LastUpdated, decimal? LowPrice, decimal? HighPrice, string? FiftyTwoWeekRange, decimal? ClosePrice, decimal? PercentChange)> GetQuickData(string symbol);
-    Task<ApiResponse<StockApiInfo>?> FetchStockInfo(string symbol);
+    Task<ApiResponse<StockApiInfo>?> GetStockInfo(string symbol);
     Task<ApiResponse<CompanyProfile?>?> GetStockCompanyProfile(string symbol);
     Dictionary<string, DateTime> GetAllLastUpdated();
     ApiResponse<DateTime> GetStockLastUpdated(string symbol);
