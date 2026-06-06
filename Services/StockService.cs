@@ -15,6 +15,7 @@ namespace TradingSimulator_Backend.Services
     using System.Collections.Concurrent;
     using TradingSimulatorBackend.Caching;
     using System.ComponentModel.DataAnnotations;
+    using System.Text.Json;
 
     public class StockService : IStockService
     {
@@ -24,10 +25,11 @@ namespace TradingSimulator_Backend.Services
 
         // cache
         private static ConcurrentDictionary<string, CacheEntry<decimal?>> _stockCache = new ConcurrentDictionary<string, CacheEntry<decimal?>>();
+        private static ConcurrentDictionary<string, CacheEntry<StockApiInfo?>> _stockApiInfoCache = new ConcurrentDictionary<string, CacheEntry<StockApiInfo?>>();
         
         // old
         private static ConcurrentDictionary<string, (string? Logo, string? Name)> _stockImageCache = new ConcurrentDictionary<string, (string? Logo, string? Name)>();
-        private static ConcurrentDictionary<string, (StockApiInfo? Info, DateTime Timestamp)> _stockApiInfoCache = new ConcurrentDictionary<string, (StockApiInfo? Info, DateTime Timestamp)>();
+        // private static ConcurrentDictionary<string, (StockApiInfo? Info, DateTime Timestamp)> _stockApiInfoCache = new ConcurrentDictionary<string, (StockApiInfo? Info, DateTime Timestamp)>();
         private static ConcurrentDictionary<string, CompanyProfile?> _CompanyDetailsCache = new ConcurrentDictionary<string, CompanyProfile?>();
         private static ConcurrentDictionary<string, (StockFullHistory? History, DateTime Timestamp)> _StockFullHistoryCache = new ConcurrentDictionary<string, (StockFullHistory? History, DateTime Timestamp)>();
         private static (ConcurrentDictionary<string, int> Map, DateTime Timestamp) TrendingMap = (new ConcurrentDictionary<string, int>(), DateTime.UtcNow);
@@ -68,7 +70,7 @@ namespace TradingSimulator_Backend.Services
 
             var tasks = symbols.Select(async symbol => {
 
-                if (_stockCache.TryGetValue(symbol, out var entry) && DateTime.UtcNow - entry.Timestamp < TimeSpan.FromMinutes(480)){
+                if (_stockCache.TryGetValue(symbol, out var entry) && DateTime.UtcNow - entry.Timestamp < TimeSpan.FromHours(8)){
                     results[symbol] = ApiResponse<decimal?>.Success(entry.Value);
                     return;
                 }
@@ -77,21 +79,19 @@ namespace TradingSimulator_Backend.Services
                 results[symbol] = response;
 
                 if (!response.HasError && response.Data != null){
-                    _stockCache.AddOrUpdate(
-                        symbol, _ => new CacheEntry<decimal?>{
-                            Value = response.Data,
-                            Timestamp = DateTime.UtcNow
-                        },
-                        (_, _) => new CacheEntry<decimal?>{
-                            Value = response.Data,
-                            Timestamp = DateTime.UtcNow
-                        }
-                    );
+                    _stockCache.AddOrUpdate(symbol, key => new CacheEntry<decimal?>{
+                        Value = response.Data,
+                        Timestamp = DateTime.UtcNow
+                    },
+                    (key, value) => new CacheEntry<decimal?>{
+                        Value = response.Data,
+                        Timestamp = DateTime.UtcNow
+                    });
                 }
             });
 
             await Task.WhenAll(tasks);
-            return results.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            return results.ToDictionary((kvp) => kvp.Key, (kvp) => kvp.Value);
         }
 
         // Get the Last updated time of the stock price
@@ -104,11 +104,40 @@ namespace TradingSimulator_Backend.Services
             }
         }
 
+        // get stock info
+        public async Task<ApiResponse<StockApiInfo?>?> GetStockInfo(string symbol){
+
+            if (_stockApiInfoCache.ContainsKey(symbol) && (DateTime.Now - _stockApiInfoCache[symbol].Timestamp) < TimeSpan.FromHours(8)){
+                return ApiResponse<StockApiInfo?>.Success(_stockApiInfoCache[symbol].Value);
+            }
+
+            var result = await FetchStockInfoFromApi(symbol);
+
+            if(!result.HasError){
+                _stockApiInfoCache[symbol] = new CacheEntry<StockApiInfo?>{
+                    ValueTask = result.Data,
+                    TimestampAttribute = DateTime.Now
+                };
+            }
+
+            return result;
+
+        }
+
+
+
+
+
+
+
+
+
 
 
 
         // ---------------- private external api calls ----------------
 
+        // fetch stock price from API
         private async Task<ApiResponse<decimal?>> FetchStockPriceFromApi(string symbol){
             var url = $"https://api.twelvedata.com/price?symbol={symbol}&apikey={_apiKey}";
             string json;
@@ -146,6 +175,45 @@ namespace TradingSimulator_Backend.Services
             return ApiResponse<decimal?>.Success(price);
         }
 
+        // fetch stock info from api
+        private async Task<ApiResponse<StockApiInfo?>> FetchStockInfoFromApi(string symbol){
+            var url = $"https://api.twelvedata.com/quote?symbol={symbol}&apikey={_apiKey}";
+            string json;
+
+            try{
+                var response = await _httpClient.GetAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                    return ApiResponse<StockApiInfo?>.Failure((int)response.StatusCode);
+
+                json = await response.Content.ReadAsStringAsync();
+            }
+            catch(HttpRequestException){
+                return ApiResponse<StockApiInfo?>.Failure(-1);
+            }
+
+            JObject data;
+            try{
+                data = JObject.Parse(json);
+            }
+            catch (JsonException){
+                return ApiResponse<StockApiInfo?>.Failure(-1);
+            }
+
+            if (data["status"]?.ToString() == "error"){
+                int errorCode = data["code"]?.Value<int>() ?? -1;
+                return ApiResponse<StockApiInfo?>.Failure(errorCode);
+            }
+
+            try{
+                var stockInfo = JsonConvert.DeserializeObject<StockApiInfo>(json);
+
+                return ApiResponse<StockApiInfo?>.Success(stockInfo);
+            }
+            catch(JsonException){
+                return ApiResponse<StockApiInfo?>.Failure(-1);
+            }
+        }
 
 
 
@@ -160,7 +228,8 @@ namespace TradingSimulator_Backend.Services
 
 
 
-        //  old --------------------------------------------------- old
+
+        //  old --------------------------------------------------- old - Need To Refactor
 
         public string[] getTrendingList(){
             return TrendingList;
@@ -444,29 +513,6 @@ namespace TradingSimulator_Backend.Services
             return result;
         }
 
-        public async Task<ApiResponse<StockApiInfo?>?> FetchStockInfo(string symbol){
-
-            if (_stockApiInfoCache.ContainsKey(symbol) && (DateTime.Now - _stockApiInfoCache[symbol].Timestamp) < TimeSpan.FromMinutes(480))
-            {
-                var cachedData = _stockApiInfoCache[symbol];
-                return new ApiResponse<StockApiInfo?>{
-                    Data = cachedData.Info,
-                    HasError = false,
-                    ErrorCode = null
-                };
-                
-            }
-
-            var result = await FetchStockInfoFromApi(symbol);
-
-            if(!result.HasError){
-                _stockApiInfoCache[symbol] = (result.Data, DateTime.Now);
-            }
-
-            return result;
-
-        }
-
         private DateTime? TryParseDateTime(string datetime)
         {
             if (DateTime.TryParse(datetime, out var parsedDate))
@@ -527,55 +573,6 @@ namespace TradingSimulator_Backend.Services
                     HasError = false,
                     ErrorCode = null
                 };
-        }
-
-        private async Task<ApiResponse<StockApiInfo?>?> FetchStockInfoFromApi(string symbol){
-            var url = $"https://api.twelvedata.com/quote?symbol={symbol}&apikey={_apiKey}";
-            var response = await _httpClient.GetAsync(url);
-
-            if(!response.IsSuccessStatusCode){
-                Console.WriteLine($"Error: {response.StatusCode}");
-                return new ApiResponse<StockApiInfo?>{
-                    Data = null,
-                    HasError = true,
-                    ErrorCode = (int)response.StatusCode
-                };
-            }
-
-            var json = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Raw API Response: {json}");
-
-            var data = JObject.Parse(json);
-
-            if (data["status"]?.ToString() == "error")
-            {
-                int errorCode = data["code"]?.Value<int>() ?? -1;
-
-                Console.WriteLine($"API error for {symbol}: {json}");
-                return new ApiResponse<StockApiInfo?>
-                {
-                    Data = null,
-                    HasError = true,
-                    ErrorCode = errorCode
-                };
-            }
-
-            try{
-                var stockInfo = JsonConvert.DeserializeObject<StockApiInfo>(json);
-
-                return new ApiResponse<StockApiInfo?>{
-                    Data = stockInfo,
-                    HasError = false,
-                    ErrorCode = null
-                };
-            }
-            catch{
-                return new ApiResponse<StockApiInfo?>{
-                    Data = null,
-                    HasError = true,
-                    ErrorCode = -1
-                };
-            }
         }
 
         private async Task<ApiResponse<CompanyProfile?>?> FetchCompanyProfile(string symbol){

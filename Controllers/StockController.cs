@@ -79,7 +79,7 @@ namespace TradingSimulator_Backend.Controllers
         [HttpGet("GetStockQuoteInfo/{*symbol}")]
         public async Task<IActionResult> GetStockQuoteInfo(string symbol)
         {
-            var quoteData = await _stockService.FetchStockInfo(symbol);
+            var quoteData = await _stockService.GetStockInfo(symbol);
 
             if (quoteData == null)
             {
