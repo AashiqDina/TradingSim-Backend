@@ -71,23 +71,6 @@ namespace TradingSimulator_Backend.Controllers
             });
         }
 
-        // temp
-        [HttpPost("migrate-passwords")]
-        public async Task<IActionResult> MigratePasswords(){
-            var users = await _context.Users.ToListAsync();
-
-            foreach (var user in users){
-                if (!user.Password.StartsWith("$2")){
-                    user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-                }
-            }
-
-            await _context.SaveChangesAsync();
-
-            return Ok("Passwords migrated");
-        }
-
-
 
 
 
