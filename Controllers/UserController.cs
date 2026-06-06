@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TradingSimulator_Backend.Data;
 using TradingSimulator_Backend.Models;
+using BCrypt.Net;
 
 namespace TradingSimulator_Backend.Controllers
 {
@@ -16,19 +17,90 @@ namespace TradingSimulator_Backend.Controllers
             _context = context;
         }
 
-        // ------------------ BASIC USER OPERATIONS ------------------ //
-
-        // [HttpGet]
-        // public async Task<ActionResult<IEnumerable<User>>> GetUsers()
-        // {
-        //     return await _context.Users.ToListAsync();
-        // }
-
+        // simple ping to check if backend is currently running (since render spins down after periods of inactivity)
         [HttpGet("ping")]
         public ActionResult<bool> Ping()
         {
             return true;
         }
+
+        // Register the user - ensures the password is hashed
+        [HttpPost]
+        public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request){
+
+            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+                return BadRequest(new { success = false, message = "Username already taken." });
+
+            var user = new User{
+                Username = request.Username,
+                Password = BCrypt.Net.BCrypt.HashPassword(request.Password)
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            user.Portfolio = new Portfolio{
+                Stocks = new List<Stock>()
+            };
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true });
+        }
+
+        // logs the user in if the encoded password is equal to the user input's encoded password (using the stored encoded password's salt)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest model){
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == model.Username);
+
+            if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.Password)){
+                return Unauthorized(new { success = false, message = "Invalid username or password" });
+            }
+
+            return Ok(new {
+                success = true,
+                user = new {
+                    user.Id,
+                    user.Username,
+                    user.InvestedAmount,
+                    user.CurrentValue,
+                    user.ProfitLoss
+                }
+            });
+        }
+
+        // temp
+        [HttpPost("migrate-passwords")]
+        public async Task<IActionResult> MigratePasswords(){
+            var users = await _context.Users.ToListAsync();
+
+            foreach (var user in users){
+                if (!user.Password.StartsWith("$2")){
+                    user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Passwords migrated");
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // old code
 
         [HttpGet("List")]
         public async Task<ActionResult<IEnumerable<UserObj>>> GetUsersList()
@@ -82,30 +154,30 @@ namespace TradingSimulator_Backend.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
-        {
-            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
-                return BadRequest(new { success = false, message = "Username already taken." });
+        // [HttpPost]
+        // public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
+        // {
+        //     if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+        //         return BadRequest(new { success = false, message = "Username already taken." });
         
-            var user = new User
-            {
-                Username = request.Username,
-                Password = request.Password
-            };
+        //     var user = new User
+        //     {
+        //         Username = request.Username,
+        //         Password = request.Password
+        //     };
         
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+        //     _context.Users.Add(user);
+        //     await _context.SaveChangesAsync();
         
-            user.Portfolio = new Portfolio
-            {
-                Stocks = new List<Stock>()
-            };
+        //     user.Portfolio = new Portfolio
+        //     {
+        //         Stocks = new List<Stock>()
+        //     };
         
-            await _context.SaveChangesAsync();
+        //     await _context.SaveChangesAsync();
         
-            return Ok(new { success = true });
-        }
+        //     return Ok(new { success = true });
+        // }
 
 
         
@@ -117,30 +189,30 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(new { exists });
         }
         
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest model)
-        {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u =>
-                    u.Username == model.Username &&
-                    u.Password == model.Password);
+        // [HttpPost("login")]
+        // public async Task<IActionResult> Login([FromBody] LoginRequest model)
+        // {
+        //     var user = await _context.Users
+        //         .FirstOrDefaultAsync(u =>
+        //             u.Username == model.Username &&
+        //             u.Password == model.Password);
         
-            if (user == null)
-                return Unauthorized(new { success = false, message = "Invalid username or password" });
+        //     if (user == null)
+        //         return Unauthorized(new { success = false, message = "Invalid username or password" });
         
-            return Ok(new
-            {
-                success = true,
-                user = new
-                {
-                    user.Id,
-                    user.Username,
-                    user.InvestedAmount,
-                    user.CurrentValue,
-                    user.ProfitLoss
-                }
-            });
-        }
+        //     return Ok(new
+        //     {
+        //         success = true,
+        //         user = new
+        //         {
+        //             user.Id,
+        //             user.Username,
+        //             user.InvestedAmount,
+        //             user.CurrentValue,
+        //             user.ProfitLoss
+        //         }
+        //     });
+        // }
 
 
         // [HttpPost("logout")]
