@@ -15,7 +15,6 @@ namespace TradingSimulator_Backend.Services
     using System.Collections.Concurrent;
     using TradingSimulatorBackend.Caching;
     using System.ComponentModel.DataAnnotations;
-    using System.Text.Json;
 
     public class StockService : IStockService
     {
@@ -115,7 +114,7 @@ namespace TradingSimulator_Backend.Services
 
             if(!result.HasError){
                 _stockApiInfoCache[symbol] = new CacheEntry<StockApiInfo?>{
-                    ValueTask = result.Data,
+                    Value = result.Data,
                     Timestamp = DateTime.Now
                 };
             }
@@ -123,6 +122,17 @@ namespace TradingSimulator_Backend.Services
             return result;
 
         }
+
+        // Get the Last updated time of the stock info
+        public DateTime GetStockInfoLastUpdated(string symbol){
+            if (_stockApiInfoCache.ContainsKey(symbol)){
+                return _stockApiInfoCache[symbol].Timestamp;
+            }
+            else{
+                return ApiResponse<DateTime>.Failure(404);
+            }
+        }
+
 
 
 
@@ -317,14 +327,6 @@ namespace TradingSimulator_Backend.Services
             );
         }
 
-        public DateTime GetStockInfoLastUpdated(string symbol){
-            var timestamp = _stockApiInfoCache[symbol].Timestamp;
-            DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(timestamp);
-            DateTime localTime = dateTimeOffset.LocalDateTime;
-
-            return localTime;
-        }
-
         public async Task<ApiResponse<StockFullHistory?>> GetFullStockHistory(string symbol){
 
             if(_StockFullHistoryCache.ContainsKey(symbol) && DateTime.Now - _StockFullHistoryCache[symbol].Timestamp < TimeSpan.FromMinutes(480)){
@@ -409,7 +411,7 @@ namespace TradingSimulator_Backend.Services
         {
             if(_stockApiInfoCache.ContainsKey(symbol)){
                 return new ApiResponse<string?>{
-                    Data = _stockApiInfoCache[symbol].Timestamp,
+                    Data = _stockApiInfoCache[symbol].Value.Name,
                     HasError = false,
                     ErrorCode = null
                 };
