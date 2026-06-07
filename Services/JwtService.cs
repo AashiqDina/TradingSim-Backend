@@ -10,13 +10,12 @@ namespace TradingSimulator_Backend.Services
     {
         private readonly IConfiguration _config;
 
-        public JwtService(IConfiguration config)
-        {
+        public JwtService(IConfiguration config){
             _config = config;
         }
 
-        public string GenerateToken(User user)
-        {
+        public string GenerateToken(User user){
+
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_config["Jwt:Key"]!)
             );
@@ -33,7 +32,7 @@ namespace TradingSimulator_Backend.Services
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(7),
+                expires: DateTime.UtcNow.AddDays(14), // 14 days feels like a good safe zone good ux + security
                 signingCredentials: creds
             );
 

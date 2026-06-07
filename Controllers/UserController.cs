@@ -136,6 +136,37 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(ApiResponse<List<UserReceivedRequest>>.Success(user.ReceivedRequests.ToList()));
         }
 
+        [Authorize]
+        [HttpDelete]
+        public async Task<IActionResult> DeleteUser(){
+            try{
+
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (userIdClaim == null){
+                    return Unauthorized();
+                }
+
+                var userId = long.Parse(userIdClaim);
+                var exists = await _context.Users.AnyAsync(u => u.Id == userId);
+
+                if (!exists)
+                    return NotFound(new { message = "User not found" });
+
+                await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"DELETE FROM users WHERE id = {userId}"
+                );
+
+                return Ok(new { message = "User deleted successfully" });
+            }
+            catch (Exception ex){
+                return StatusCode(500, new {
+                    message = "Failed to delete user",
+                    error = ex.Message
+                });
+            }
+        }
+
 
 
 
@@ -172,36 +203,6 @@ namespace TradingSimulator_Backend.Controllers
             var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound();
             return user;
-        }
-
-        [Authorize]
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(long id)
-        {
-            try
-            {
-                var exists = await _context.Users.AnyAsync(u => u.Id == id);
-
-                if (!exists)
-                    return NotFound(new { message = "User not found" });
-
-                await _context.Database.ExecuteSqlInterpolatedAsync(
-                    $"DELETE FROM users WHERE id = {id}"
-                );
-
-                return Ok(new { message = "User deleted successfully" });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("DELETE USER FAILED:");
-                Console.WriteLine(ex.ToString());
-
-                return StatusCode(500, new
-                {
-                    message = "Failed to delete user",
-                    error = ex.Message
-                });
-            }
         }
 
 
