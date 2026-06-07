@@ -136,6 +136,7 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(ApiResponse<List<UserReceivedRequest>>.Success(user.ReceivedRequests.ToList()));
         }
 
+        // deletes user if token is valid
         [Authorize]
         [HttpDelete]
         public async Task<IActionResult> DeleteUser(){
@@ -159,7 +160,7 @@ namespace TradingSimulator_Backend.Controllers
 
                 return Ok(new { message = "User deleted successfully" });
             }
-            catch (Exception ex){
+            catch(Exception ex){
                 return StatusCode(500, new {
                     message = "Failed to delete user",
                     error = ex.Message
@@ -167,104 +168,50 @@ namespace TradingSimulator_Backend.Controllers
             }
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-        // --------- old code  --------- 
-
-        [HttpGet("List")]
-        public async Task<ActionResult<IEnumerable<UserObj>>> GetUsersList()
-        {
-            var users = await _context.Users
-                .Select(u => new UserObj
-                {
-                    Id = u.Id,
-                    Username = u.Username,
-                    ProfitLoss = u.ProfitLoss
-                })
-                .ToListAsync();
-
-            return Ok(users);
-        }
-
-        [Authorize]
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult<User>> GetUser(int id)
-        {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
-            return user;
-        }
-
-
         [HttpPost("checkUsername")]
-        public async Task<IActionResult> CheckUsername([FromBody] UsernameCheckRequest request)
-        {
+        public async Task<IActionResult> CheckUsername([FromBody] UsernameCheckRequest request){
             var exists = await _context.Users.AnyAsync(u => u.Username == request.Username);
             return Ok(new { exists });
         }
 
-        private async Task<User?> LoadUserWithRelations(long userId)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null) return null;
-        
-            user.FriendsList = await _context.UsersFriendsList
-                .Where(f => f.UserId == userId)
-                .ToListAsync();
-        
-            user.SentRequests = await _context.UsersSentRequests
-                .Where(r => r.UserId == userId)
-                .ToListAsync();
-        
-            user.ReceivedRequests = await _context.UsersReceivedRequests
-                .Where(r => r.UserId == userId)
-                .ToListAsync();
-        
-            return user;
-        }
-
         [Authorize]
-        [HttpPost("Send-Friend-Request/{userId}/{friendId}")]
-        public async Task<IActionResult> SendFriendRequest(long userId, long friendId)
-        {
+        [HttpPost("Send-Friend-Request/{friendId}")]
+        public async Task<IActionResult> SendFriendRequest(long friendId){
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userIdClaim == null){
+                return Unauthorized();
+            }
+
+            var userId = long.Parse(userIdClaim);
+
             if (userId == friendId)
-                return BadRequest(new ApiResponse<string> { HasError = true, ErrorCode = 400, Data = "Cannot send request to yourself." });
+                return BadRequest(ApiResponse<string>.Failure(400));
         
             var user = await LoadUserWithRelations(userId);
             var friend = await LoadUserWithRelations(friendId);
         
             if (user == null || friend == null)
-                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
+                return NotFound(ApiResponse<string>.Failure(404));
         
             if (user.FriendsList.Any(f => f.FriendsUserId == friendId))
-                return BadRequest(new ApiResponse<string> { HasError = true, ErrorCode = 400, Data = "Already friends." });
+                return BadRequest(ApiResponse<string>.Failure(400));
         
             if (user.SentRequests.Any(r => r.FriendsUserId == friendId))
-                return BadRequest(new ApiResponse<string> { HasError = true, ErrorCode = 400, Data = "Request already sent." });
+                return BadRequest(ApiResponse<string>.Failure(400));
         
             if (user.ReceivedRequests.Any(r => r.FriendsUserId == friendId))
-                return BadRequest(new ApiResponse<string> { HasError = true, ErrorCode = 400, Data = "You already have a pending request from this user." });
+                return BadRequest(ApiResponse<string>.Failure(400));
         
-            _context.UsersSentRequests.Add(new UserSentRequest
-            {
+            _context.UsersSentRequests.Add(new UserSentRequest {
                 UserId = user.Id,
                 FriendsUserId = friend.Id,
                 Username = friend.Username,
                 ProfitLoss = friend.ProfitLoss
             });
         
-            _context.UsersReceivedRequests.Add(new UserReceivedRequest
-            {
+            _context.UsersReceivedRequests.Add(new UserReceivedRequest {
                 UserId = friend.Id,
                 FriendsUserId = user.Id,
                 Username = user.Username,
@@ -272,25 +219,32 @@ namespace TradingSimulator_Backend.Controllers
             });
         
             await _context.SaveChangesAsync();
-            return Ok(new ApiResponse<string> { HasError = false, Data = "Friend request sent successfully." });
+            return Ok(ApiResponse<string>.Success("Friend request sent successfully"));    
         }
 
         [Authorize]
-        [HttpPost("Accept-Request/{userId}/{friendId}")]
-        public async Task<IActionResult> AcceptFriendRequest(long userId, long friendId)
-        {
+        [HttpPost("Accept-Request/{friendId}")]
+        public async Task<IActionResult> AcceptFriendRequest(long friendId){
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userIdClaim == null){
+                return Unauthorized();
+            }
+
+            var userId = long.Parse(userIdClaim);
             var user = await LoadUserWithRelations(userId);
             var friend = await LoadUserWithRelations(friendId);
         
             if (user == null || friend == null)
-                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
+                return NotFound(ApiResponse<string>.Failure(404));
         
             var received = user.ReceivedRequests.FirstOrDefault(r => r.FriendsUserId == friendId);
             var sent = friend.SentRequests.FirstOrDefault(r => r.FriendsUserId == userId);
         
             if (received == null || sent == null)
-                return BadRequest(new ApiResponse<string> { HasError = true, ErrorCode = 400, Data = "No pending request found." });
-        
+                return NotFound(ApiResponse<string>.Failure(400));
+
             _context.UsersReceivedRequests.Remove(received);
             _context.UsersSentRequests.Remove(sent);
         
@@ -311,18 +265,25 @@ namespace TradingSimulator_Backend.Controllers
             });
         
             await _context.SaveChangesAsync();
-            return Ok(new ApiResponse<string> { HasError = false, Data = "Friend request accepted successfully." });
+            return Ok(ApiResponse<string>.Success("Friend request accepted successfully"));    
         }
 
         [Authorize]
-        [HttpPost("Decline-Request/{userId}/{friendId}")]
-        public async Task<IActionResult> DeclineFriendRequest(long userId, long friendId)
-        {
+        [HttpPost("Decline-Request/{friendId}")]
+        public async Task<IActionResult> DeclineFriendRequest(long friendId){
+    
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userIdClaim == null){
+                return Unauthorized();
+            }
+
+            var userId = long.Parse(userIdClaim);
             var user = await LoadUserWithRelations(userId);
             var friend = await LoadUserWithRelations(friendId);
         
             if (user == null || friend == null)
-                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
+                return NotFound(ApiResponse<string>.Failure(404));
         
             var received = user.ReceivedRequests.FirstOrDefault(r => r.FriendsUserId == friendId);
             var sent = friend.SentRequests.FirstOrDefault(r => r.FriendsUserId == userId);
@@ -331,18 +292,25 @@ namespace TradingSimulator_Backend.Controllers
             if (sent != null) _context.UsersSentRequests.Remove(sent);
         
             await _context.SaveChangesAsync();
-            return Ok(new ApiResponse<string> { HasError = false, Data = "Friend request declined successfully." });
+            return Ok(ApiResponse<string>.Success("Friend request declined successfully"));    
         }
 
         [Authorize]
-        [HttpDelete("Delete-Friend/{userId}/{friendId}")]
-        public async Task<IActionResult> DeleteFriend(long userId, long friendId)
-        {
+        [HttpDelete("Delete-Friend/{friendId}")]
+        public async Task<IActionResult> DeleteFriend(long friendId){
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userIdClaim == null){
+                return Unauthorized();
+            }
+
+            var userId = long.Parse(userIdClaim);
             var user = await LoadUserWithRelations(userId);
             var friend = await LoadUserWithRelations(friendId);
         
             if (user == null || friend == null)
-                return NotFound(new ApiResponse<string> { HasError = true, ErrorCode = 404, Data = "User not found." });
+                return NotFound(ApiResponse<string>.Failure(404));
         
             var f1 = user.FriendsList.FirstOrDefault(f => f.FriendsUserId == friendId);
             var f2 = friend.FriendsList.FirstOrDefault(f => f.FriendsUserId == userId);
@@ -351,8 +319,80 @@ namespace TradingSimulator_Backend.Controllers
             if (f2 != null) _context.UsersFriendsList.Remove(f2);
         
             await _context.SaveChangesAsync();
-            return Ok(new ApiResponse<string> { HasError = false, Data = "Friend deleted successfully." });
+            return Ok(ApiResponse<string>.Success("Friend deleted successfully"));    
         }
+
+        [HttpGet("List")]
+        public async Task<ActionResult<IEnumerable<UserObj>>> GetUsersList()
+        {
+            var users = await _context.Users
+                .Select(u => new UserObj
+                {
+                    Id = u.Id,
+                    Username = u.Username,
+                    ProfitLoss = u.ProfitLoss
+                })
+                .ToListAsync();
+
+            return Ok(users);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+        // private functions ---------------------
+
+        private async Task<User?> LoadUserWithRelations(long userId){
+            
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return null;
+        
+            user.FriendsList = await _context.UsersFriendsList
+                .Where(f => f.UserId == userId)
+                .ToListAsync();
+        
+            user.SentRequests = await _context.UsersSentRequests
+                .Where(r => r.UserId == userId)
+                .ToListAsync();
+        
+            user.ReceivedRequests = await _context.UsersReceivedRequests
+                .Where(r => r.UserId == userId)
+                .ToListAsync();
+        
+            return user;
+        }
+
+
+
+
+
+
+
+
+        // --------- old code  --------- 
+
+
+
+        // [Authorize]
+        // [HttpGet("{id:int}")]
+        // public async Task<ActionResult<User>> GetUser(int id)
+        // {
+        //     var user = await _context.Users.FindAsync(id);
+        //     if (user == null) return NotFound();
+        //     return user;
+        // }
+
+
+
+
 
 
         
