@@ -80,6 +80,62 @@ namespace TradingSimulator_Backend.Controllers
 
         }
 
+        // gets the users friends
+        [Authorize]
+        [HttpGet("Get-Friends")]
+        public async Task<IActionResult> GetFriends(){
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userIdClaim == null){
+                return Unauthorized();
+            }
+
+            var userId = long.Parse(userIdClaim);
+
+            var user = await LoadUserWithRelations(userId);
+            if (user == null) return NotFound();
+
+            return Ok(ApiResponse<List<UserFriend>>.Success(user.FriendsList.ToList()));
+
+        }
+
+        [Authorize]  
+        [HttpGet("Get-Sent-Request")]
+        public async Task<IActionResult> GetSentRequests(){
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userIdClaim == null){
+                return Unauthorized();
+            }
+
+            var userId = long.Parse(userIdClaim);
+
+            var user = await LoadUserWithRelations(userId);
+            if (user == null) return NotFound();
+        
+            return Ok(ApiResponse<List<UserSentRequest>>.Success(user.SentRequests.ToList()));
+                                
+        }
+        
+        [Authorize]
+        [HttpGet("Get-Received-Request")]
+        public async Task<IActionResult> GetReceivedRequests(){
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userIdClaim == null){
+                return Unauthorized();
+            }
+
+            var userId = long.Parse(userIdClaim);
+
+            var user = await LoadUserWithRelations(userId);
+            if (user == null) return NotFound();
+        
+            return Ok(ApiResponse<List<UserReceivedRequest>>.Success(user.ReceivedRequests.ToList()));
+        }
 
 
 
@@ -92,7 +148,8 @@ namespace TradingSimulator_Backend.Controllers
 
 
 
-        // old code
+
+        // --------- old code  --------- 
 
         [HttpGet("List")]
         public async Task<ActionResult<IEnumerable<UserObj>>> GetUsersList()
@@ -148,33 +205,6 @@ namespace TradingSimulator_Backend.Controllers
             }
         }
 
-        // [HttpPost]
-        // public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
-        // {
-        //     if (await _context.Users.AnyAsync(u => u.Username == request.Username))
-        //         return BadRequest(new { success = false, message = "Username already taken." });
-        
-        //     var user = new User
-        //     {
-        //         Username = request.Username,
-        //         Password = request.Password
-        //     };
-        
-        //     _context.Users.Add(user);
-        //     await _context.SaveChangesAsync();
-        
-        //     user.Portfolio = new Portfolio
-        //     {
-        //         Stocks = new List<Stock>()
-        //     };
-        
-        //     await _context.SaveChangesAsync();
-        
-        //     return Ok(new { success = true });
-        // }
-
-
-        
 
         [HttpPost("checkUsername")]
         public async Task<IActionResult> CheckUsername([FromBody] UsernameCheckRequest request)
@@ -182,49 +212,6 @@ namespace TradingSimulator_Backend.Controllers
             var exists = await _context.Users.AnyAsync(u => u.Username == request.Username);
             return Ok(new { exists });
         }
-        
-        // [HttpPost("login")]
-        // public async Task<IActionResult> Login([FromBody] LoginRequest model)
-        // {
-        //     var user = await _context.Users
-        //         .FirstOrDefaultAsync(u =>
-        //             u.Username == model.Username &&
-        //             u.Password == model.Password);
-        
-        //     if (user == null)
-        //         return Unauthorized(new { success = false, message = "Invalid username or password" });
-        
-        //     return Ok(new
-        //     {
-        //         success = true,
-        //         user = new
-        //         {
-        //             user.Id,
-        //             user.Username,
-        //             user.InvestedAmount,
-        //             user.CurrentValue,
-        //             user.ProfitLoss
-        //         }
-        //     });
-        // }
-
-
-        // [HttpPost("logout")]
-        // public IActionResult Logout()
-        // {
-        //     HttpContext.Session.Clear();
-        //     return Ok(new { message = "Logged out successfully" });
-        // }
-
-        // [HttpGet("profile")]
-        // public IActionResult GetProfile()
-        // {
-        //     var username = HttpContext.Session.GetString("Username");
-        //     if (string.IsNullOrEmpty(username))
-        //         return Unauthorized(new { message = "Not logged in" });
-
-        //     return Ok(new { username });
-        // }
 
         private async Task<User?> LoadUserWithRelations(long userId)
         {
@@ -367,46 +354,6 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(new ApiResponse<string> { HasError = false, Data = "Friend deleted successfully." });
         }
 
-        [Authorize]
-        [HttpGet("Get-Friends")]
-        public async Task<IActionResult> GetFriends(){
-
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (userIdClaim == null)
-                return Unauthorized();
-
-            var userId = long.Parse(userIdClaim);
-
-            var user = await LoadUserWithRelations(userId);
-            if (user == null) return NotFound();
-
-            return Ok(new ApiResponse<List<UserFriend>>
-            {
-                HasError = false,
-                Data = user.FriendsList.ToList()
-            });
-        }
-
-        [Authorize]  
-        [HttpGet("Get-Sent-Request/{userId}")]
-        public async Task<IActionResult> GetSentRequests(long userId)
-        {
-            var user = await LoadUserWithRelations(userId);
-            if (user == null) return NotFound();
-        
-            return Ok(new ApiResponse<List<UserSentRequest>> { HasError = false, Data = user.SentRequests.ToList() });
-        }
-        
-        [Authorize]
-        [HttpGet("Get-Received-Request/{userId}")]
-        public async Task<IActionResult> GetReceivedRequests(long userId)
-        {
-            var user = await LoadUserWithRelations(userId);
-            if (user == null) return NotFound();
-        
-            return Ok(new ApiResponse<List<UserReceivedRequest>> { HasError = false, Data = user.ReceivedRequests.ToList() });
-        }
 
         
     }
