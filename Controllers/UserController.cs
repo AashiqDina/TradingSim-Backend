@@ -5,7 +5,7 @@ using TradingSimulator_Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using BCrypt.Net;
 using System.Security.Claims;
-namespace TradingSimulator_Backend.Services;
+using TradingSimulator_Backend.Services;
 
 namespace TradingSimulator_Backend.Controllers
 {
