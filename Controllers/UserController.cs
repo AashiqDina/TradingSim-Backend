@@ -4,6 +4,7 @@ using TradingSimulator_Backend.Data;
 using TradingSimulator_Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using BCrypt.Net;
+using System.Security.Claims;
 
 namespace TradingSimulator_Backend.Controllers
 {
@@ -12,10 +13,12 @@ namespace TradingSimulator_Backend.Controllers
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly JwtService _jwtService;
 
-        public UserController(AppDbContext context)
+        public UserController(AppDbContext context, JwtService jwtService)
         {
             _context = context;
+            _jwtService = jwtService;
         }
 
         // simple ping to check if backend is currently running (since render spins down after periods of inactivity)
