@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using TradingSimulator_Backend.Data;
 using TradingSimulator_Backend.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +22,9 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
+
+        // local testing:
+        //
         // policy.WithOrigins(
         //     "https://aashiqdina.github.io",
         //     "http://localhost:5048"
@@ -41,19 +47,41 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var key = Encoding.UTF8.GetBytes(
+            builder.Configuration["Jwt:Key"]!
+        );
+
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(key),
+
+                ValidateIssuer = true,
+                ValidIssuer =
+                    builder.Configuration["Jwt:Issuer"],
+
+                ValidateAudience = true,
+                ValidAudience =
+                    builder.Configuration["Jwt:Audience"],
+
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+    });
+
+
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<IStockService, StockService>();
 builder.Services.AddHttpClient<StockService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddHttpClient<NewsService>();
-
-// builder.Services.AddDistributedMemoryCache();
-// builder.Services.AddSession(options =>
-// {
-//     options.IdleTimeout = TimeSpan.FromMinutes(30);
-//     options.Cookie.HttpOnly = true;
-//     options.Cookie.IsEssential = true;
-// });
+builder.Services.AddScoped<JwtService>();
 
 var app = builder.Build();
 
@@ -65,9 +93,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 app.UseCors("AllowGitHubPages");
-// app.UseSession();
-// app.UseAuthorization();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
+
 
 app.Run();
 

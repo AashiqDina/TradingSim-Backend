@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TradingSimulator_Backend.Data;
 using TradingSimulator_Backend.Models;
+using Microsoft.AspNetCore.Authorization;
 using BCrypt.Net;
 
 namespace TradingSimulator_Backend.Controllers
@@ -59,8 +60,11 @@ namespace TradingSimulator_Backend.Controllers
                 return Unauthorized(new { success = false, message = "Invalid username or password" });
             }
 
+            var token = _jwtService.GenerateToken(user);
+
             return Ok(new {
                 success = true,
+                token,
                 user = new {
                     user.Id,
                     user.Username,
@@ -69,6 +73,7 @@ namespace TradingSimulator_Backend.Controllers
                     user.ProfitLoss
                 }
             });
+
         }
 
 
@@ -100,6 +105,7 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(users);
         }
 
+        [Authorize]
         [HttpGet("{id:int}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
@@ -108,6 +114,7 @@ namespace TradingSimulator_Backend.Controllers
             return user;
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(long id)
         {
@@ -235,6 +242,7 @@ namespace TradingSimulator_Backend.Controllers
             return user;
         }
 
+        [Authorize]
         [HttpPost("Send-Friend-Request/{userId}/{friendId}")]
         public async Task<IActionResult> SendFriendRequest(long userId, long friendId)
         {
@@ -276,6 +284,7 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(new ApiResponse<string> { HasError = false, Data = "Friend request sent successfully." });
         }
 
+        [Authorize]
         [HttpPost("Accept-Request/{userId}/{friendId}")]
         public async Task<IActionResult> AcceptFriendRequest(long userId, long friendId)
         {
@@ -314,6 +323,7 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(new ApiResponse<string> { HasError = false, Data = "Friend request accepted successfully." });
         }
 
+        [Authorize]
         [HttpPost("Decline-Request/{userId}/{friendId}")]
         public async Task<IActionResult> DeclineFriendRequest(long userId, long friendId)
         {
@@ -333,6 +343,7 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(new ApiResponse<string> { HasError = false, Data = "Friend request declined successfully." });
         }
 
+        [Authorize]
         [HttpDelete("Delete-Friend/{userId}/{friendId}")]
         public async Task<IActionResult> DeleteFriend(long userId, long friendId)
         {
@@ -352,17 +363,28 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(new ApiResponse<string> { HasError = false, Data = "Friend deleted successfully." });
         }
 
-        [HttpGet("Get-Friends/{userId}")]
-        public async Task<IActionResult> GetFriends(long userId)
-        {
+        [Authorize]
+        [HttpGet("Get-Friends")]
+        public async Task<IActionResult> GetFriends(){
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userIdClaim == null)
+                return Unauthorized();
+
+            var userId = long.Parse(userIdClaim);
+
             var user = await LoadUserWithRelations(userId);
             if (user == null) return NotFound();
 
-            
-        
-            return Ok(new ApiResponse<List<UserFriend>> { HasError = false, Data = user.FriendsList.ToList() });
+            return Ok(new ApiResponse<List<UserFriend>>
+            {
+                HasError = false,
+                Data = user.FriendsList.ToList()
+            });
         }
-        
+
+        [Authorize]  
         [HttpGet("Get-Sent-Request/{userId}")]
         public async Task<IActionResult> GetSentRequests(long userId)
         {
@@ -372,6 +394,7 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(new ApiResponse<List<UserSentRequest>> { HasError = false, Data = user.SentRequests.ToList() });
         }
         
+        [Authorize]
         [HttpGet("Get-Received-Request/{userId}")]
         public async Task<IActionResult> GetReceivedRequests(long userId)
         {
