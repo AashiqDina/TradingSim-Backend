@@ -77,7 +77,6 @@ namespace TradingSimulator_Backend.Controllers
                     user.ProfitLoss
                 }
             });
-
         }
 
         // gets the users friends
@@ -97,9 +96,9 @@ namespace TradingSimulator_Backend.Controllers
             if (user == null) return NotFound();
 
             return Ok(ApiResponse<List<UserFriend>>.Success(user.FriendsList.ToList()));
-
         }
 
+        // get the user's sent friend requests
         [Authorize]  
         [HttpGet("Get-Sent-Request")]
         public async Task<IActionResult> GetSentRequests(){
@@ -115,10 +114,10 @@ namespace TradingSimulator_Backend.Controllers
             var user = await LoadUserWithRelations(userId);
             if (user == null) return NotFound();
         
-            return Ok(ApiResponse<List<UserSentRequest>>.Success(user.SentRequests.ToList()));
-                                
+            return Ok(ApiResponse<List<UserSentRequest>>.Success(user.SentRequests.ToList()));                    
         }
         
+        // get the user's received friend requests
         [Authorize]
         [HttpGet("Get-Received-Request")]
         public async Task<IActionResult> GetReceivedRequests(){
