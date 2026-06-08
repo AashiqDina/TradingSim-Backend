@@ -10,101 +10,64 @@ using TradingSimulator_Backend.Services;
 
 [Route("api/portfolio")]
 [ApiController]
-public class PortfolioController : ControllerBase
-{
+public class PortfolioController : ControllerBase{
+
     private readonly AppDbContext _context;
     private readonly IStockService _stockService; 
 
-    public PortfolioController(AppDbContext context, IStockService stockService)
-    {
+    // contructor
+    public PortfolioController(AppDbContext context, IStockService stockService, JwtService jwtService){
         _context = context;
         _stockService = stockService;
     }
 
+    // gets the user portfolio 
+    // (decided not to make it protected with JWT since the data is I made my account public to anyone in the accound creation process to get an idea of the application)
     [HttpGet("{userId}")]
-    public async Task<IActionResult> GetPortfolio(int userId)
-    {
+    public async Task<IActionResult> GetPortfolio(int userId){
         var portfolio = await _context.Portfolios
                                       .Include(p => p.User)
                                       .Include(p => p.Stocks)
                                       .FirstOrDefaultAsync(p => p.UserId == userId);
 
-        if (portfolio == null)
-        {
+        if (portfolio == null){
             return NotFound("Portfolio not found.");
         }
 
         var safePortfolio = new {portfolio.Id, portfolio.UserId, portfolio.Stocks, portfolio.TotalInvested, portfolio.CurrentValue, portfolio.ProfitLoss};
-
         return Ok(safePortfolio);
     }
 
-    [HttpGet("{userId}/stocks")]
-    public async Task<IActionResult> GetStocksInPortfolio(int userId)
-    {
+    // Buy Stock 
+    [Authorize]
+    [HttpPost("stocks/buy")]
+    public async Task<IActionResult> BuyStock(StockPurchaseRequest request){
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userIdClaim == null){
+            return Unauthorized();
+        }
+
+        var userId = long.Parse(userIdClaim);
+
         var portfolio = await _context.Portfolios
                                     .Include(p => p.Stocks)
                                     .FirstOrDefaultAsync(p => p.UserId == userId);
 
-        if (portfolio == null)
-        {
-            return NotFound("Portfolio not found.");
-        }
-
-        return Ok(portfolio.Stocks); // Return the stocks
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> CreatePortfolio([FromBody] Portfolio portfolio)
-    {
-        // Check if the user exists
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == portfolio.UserId);
-        if (user == null)
-        {
-            return NotFound("User not found.");
-        }
-
-        // If the user exists, associate the portfolio with the user
-        _context.Portfolios.Add(portfolio);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetPortfolio), new { userId = portfolio.UserId }, portfolio);
-    }
-
-    
-
-    // Buy Stock (Updated)
-    [HttpPost("{userId}/stocks")]
-    public async Task<IActionResult> BuyStock(int userId, [FromBody] StockPurchaseRequest request)
-    {
-        var portfolio = await _context.Portfolios
-                                    .Include(p => p.Stocks)
-                                    .FirstOrDefaultAsync(p => p.UserId == userId);
-
-        if (portfolio == null)
-        {
-            return NotFound("Portfolio not found.");
+        if (portfolio == null){
+            return NotFound(ApiResponse<string>.Failure(404));
         }
 
         var response = await _stockService.GetStockPriceAsync(request.Symbol);
 
-        // Handle API errors or missing data
-        if (response.HasError || !response.Data.HasValue)
-        {
-            return BadRequest(new
-            {
-                Message = "Failed to fetch stock price.",
-                Symbol = request.Symbol,
-                ErrorCode = response.ErrorCode
-            });
+        if (response.HasError || !response.Data.HasValue){
+            return BadRequest(ApiResponse<string>.Failure(response.ErrorCode));
         }
 
         _stockService.updateTrendingMap(request.Symbol);
-
         var stockPrice = response.Data.Value;
-
-        var stock = new Stock
-        {
+        var stock = new Stock {
             Symbol = request.Symbol,
             PurchasePrice = stockPrice,
             Quantity = request.Quantity,
@@ -114,21 +77,34 @@ public class PortfolioController : ControllerBase
         portfolio.Stocks.Add(stock);
         await _context.SaveChangesAsync();
 
-        return Ok(new
-        {
+        return Ok(new {
             Message = "Stock purchased successfully.",
             Stock = stock
         });
     }
 
-    // Change this
-// public class StockPriceUpdaterService : BackgroundService
 
-    // [HttpPut("{userId}/stocks/update")]
-    // public async Task<IActionResult> UpdateStocksInPortfolio(int userId)
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ------------ old --------------
+
+
+
+    // [HttpGet("{userId}/stocks")]
+    // public async Task<IActionResult> GetStocksInPortfolio(int userId)
     // {
     //     var portfolio = await _context.Portfolios
-    //                                 .Include(p => p.User)
     //                                 .Include(p => p.Stocks)
     //                                 .FirstOrDefaultAsync(p => p.UserId == userId);
 
@@ -137,65 +113,29 @@ public class PortfolioController : ControllerBase
     //         return NotFound("Portfolio not found.");
     //     }
 
-    //     var stockSymbols = portfolio.Stocks.Select(s => s.Symbol).ToList();
-
-    //     var stockPrices = await _stockService.GetMultipleStockPricesAsync(stockSymbols);
-
-    //     foreach (var stock in portfolio.Stocks)
-    //     {
-    //         if (stockPrices.TryGetValue(stock.Symbol, out var stockPrice))
-    //         {
-    //             if (!stockPrice.HasError && stockPrice.Data.HasValue)
-    //             {
-    //                 stock.CurrentPrice = stockPrice.Data.Value;
-
-    //                 var utcToday = DateTime.UtcNow.Date;
-    //                 var utcTomorrow = utcToday.AddDays(1);
-
-    //                 var existingHistory = await _context.StockHistory
-    //                     .FirstOrDefaultAsync(h => 
-    //                         h.StockId == stock.Id && 
-    //                         h.Timestamp >= utcToday && 
-    //                         h.Timestamp < utcTomorrow);
-
-    //                 if (existingHistory == null)
-    //                 {
-    //                     _context.StockHistory.Add(new StockHistory
-    //                     {
-    //                         StockId = stock.Id,
-    //                         Timestamp = DateTime.UtcNow,
-    //                         Price = stockPrice.Data.Value,
-    //                         Quantity = stock.Quantity
-    //                     });
-    //                 }
-    //                 else
-    //                 {
-    //                     existingHistory.Price = stockPrice.Data.Value;
-    //                     existingHistory.Quantity = stock.Quantity;
-    //                     existingHistory.Timestamp = DateTime.UtcNow;
-    //                 }
-
-    //             }
-    //             else
-    //             {
-    //                 Console.WriteLine($"Skipping update for {stock.Symbol} due to API error or missing data.");
-    //             }
-    //         }
-    //     }
-
-    //     await _context.SaveChangesAsync();
-
-    //     if (portfolio.User != null)
-    //     {
-    //         portfolio.User.InvestedAmount = portfolio.TotalInvested;
-    //         portfolio.User.CurrentValue = portfolio.CurrentValue;
-    //         portfolio.User.ProfitLoss = portfolio.ProfitLoss;
-    //     }
-
-    //     await _context.SaveChangesAsync();
-
-    //     return Ok(portfolio);
+    //     return Ok(portfolio.Stocks); // Return the stocks
     // }
+
+    // [HttpPost]
+    // public async Task<IActionResult> CreatePortfolio([FromBody] Portfolio portfolio)
+    // {
+    //     // Check if the user exists
+    //     var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == portfolio.UserId);
+    //     if (user == null)
+    //     {
+    //         return NotFound("User not found.");
+    //     }
+
+    //     // If the user exists, associate the portfolio with the user
+    //     _context.Portfolios.Add(portfolio);
+    //     await _context.SaveChangesAsync();
+
+    //     return CreatedAtAction(nameof(GetPortfolio), new { userId = portfolio.UserId }, portfolio);
+    // }
+
+    
+
+
 
     [HttpPut("{userId}/stocks/update")]
     public async Task<IActionResult> UpdateStocksInPortfolio(int userId)

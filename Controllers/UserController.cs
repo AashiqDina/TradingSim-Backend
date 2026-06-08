@@ -11,11 +11,11 @@ namespace TradingSimulator_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class UserController : ControllerBase
-    {
+    public class UserController : ControllerBase {
         private readonly AppDbContext _context;
         private readonly JwtService _jwtService;
 
+        // contructor
         public UserController(AppDbContext context, JwtService jwtService)
         {
             _context = context;
@@ -168,12 +168,14 @@ namespace TradingSimulator_Backend.Controllers
             }
         }
 
+        // checks if the username already exists
         [HttpPost("checkUsername")]
         public async Task<IActionResult> CheckUsername([FromBody] UsernameCheckRequest request){
             var exists = await _context.Users.AnyAsync(u => u.Username == request.Username);
             return Ok(new { exists });
         }
 
+        // sends friend request if  token is valid
         [Authorize]
         [HttpPost("Send-Friend-Request/{friendId}")]
         public async Task<IActionResult> SendFriendRequest(long friendId){
@@ -222,6 +224,7 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(ApiResponse<string>.Success("Friend request sent successfully"));    
         }
 
+        // accepts request if  token is valid
         [Authorize]
         [HttpPost("Accept-Request/{friendId}")]
         public async Task<IActionResult> AcceptFriendRequest(long friendId){
@@ -268,6 +271,8 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(ApiResponse<string>.Success("Friend request accepted successfully"));    
         }
 
+
+        // decline request if  token is valid
         [Authorize]
         [HttpPost("Decline-Request/{friendId}")]
         public async Task<IActionResult> DeclineFriendRequest(long friendId){
@@ -295,6 +300,7 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(ApiResponse<string>.Success("Friend request declined successfully"));    
         }
 
+        // delete friend if token is valid
         [Authorize]
         [HttpDelete("Delete-Friend/{friendId}")]
         public async Task<IActionResult> DeleteFriend(long friendId){
@@ -322,6 +328,7 @@ namespace TradingSimulator_Backend.Controllers
             return Ok(ApiResponse<string>.Success("Friend deleted successfully"));    
         }
 
+        // gets full list of users
         [HttpGet("List")]
         public async Task<ActionResult<IEnumerable<UserObj>>> GetUsersList()
         {
@@ -348,7 +355,7 @@ namespace TradingSimulator_Backend.Controllers
 
 
 
-        // private functions ---------------------
+        // -------------------- private functions ---------------------
 
         private async Task<User?> LoadUserWithRelations(long userId){
             
@@ -377,11 +384,10 @@ namespace TradingSimulator_Backend.Controllers
 
 
 
+
+
         // --------- old code  --------- 
 
-
-
-        // [Authorize]
         // [HttpGet("{id:int}")]
         // public async Task<ActionResult<User>> GetUser(int id)
         // {
@@ -389,12 +395,6 @@ namespace TradingSimulator_Backend.Controllers
         //     if (user == null) return NotFound();
         //     return user;
         // }
-
-
-
-
-
-
         
     }
 }
