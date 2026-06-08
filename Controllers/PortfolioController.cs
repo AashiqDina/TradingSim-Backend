@@ -6,6 +6,8 @@ using Newtonsoft.Json;
 using System.Linq;
 using System.Threading.Tasks;
 using TradingSimulator_Backend.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 
 [Route("api/portfolio")]
@@ -16,7 +18,7 @@ public class PortfolioController : ControllerBase{
     private readonly IStockService _stockService; 
 
     // contructor
-    public PortfolioController(AppDbContext context, IStockService stockService, JwtService jwtService){
+    public PortfolioController(AppDbContext context, IStockService stockService){
         _context = context;
         _stockService = stockService;
     }
@@ -41,7 +43,7 @@ public class PortfolioController : ControllerBase{
     // Buy Stock 
     [Authorize]
     [HttpPost("stocks/buy")]
-    public async Task<IActionResult> BuyStock(StockPurchaseRequest request){
+    public async Task<IActionResult> BuyStock( [FromBody] StockPurchaseRequest request){
 
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
