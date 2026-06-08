@@ -64,7 +64,7 @@ public class PortfolioController : ControllerBase{
         var response = await _stockService.GetStockPriceAsync(request.Symbol);
 
         if (response.HasError || !response.Data.HasValue){
-            return BadRequest(ApiResponse<string>.Failure(response.ErrorCode));
+            return BadRequest(ApiResponse<string>.Failure(response.ErrorCode ?? -1));
         }
 
         _stockService.updateTrendingMap(request.Symbol);
